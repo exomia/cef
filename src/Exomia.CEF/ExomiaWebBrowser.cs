@@ -171,6 +171,22 @@ namespace Exomia.CEF
         }
 
         /// <inheritdoc />
+        public void ShowDevTools()
+        {
+            GetBrowser()
+                .GetHost()
+                .ShowDevTools();
+        }
+
+        /// <inheritdoc />
+        public void CloseDevTools()
+        {
+            GetBrowser()
+                .GetHost()
+                .CloseDevTools();
+        }
+
+        /// <inheritdoc />
         IUiActionHandler IExomiaWebBrowser.CreateJsUiActions()
         {
             lock (_services)

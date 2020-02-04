@@ -72,7 +72,6 @@ namespace Exomia.CEF
 
                 CefSettings settings = new CefSettings
                 {
-                    RemoteDebuggingPort = 21337,
                     BrowserSubprocessPath = Path.Combine(
                         AppDomain.CurrentDomain.SetupInformation.ApplicationBase,
                         Environment.Is64BitProcess ? "x64" : "x86",

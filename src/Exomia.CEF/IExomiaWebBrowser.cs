@@ -58,5 +58,15 @@ namespace Exomia.CEF
         /// </summary>
         /// <param name="url"> The URL to load. </param>
         void Load(string url);
+
+        /// <summary>
+        ///     Opens development tools.
+        /// </summary>
+        void ShowDevTools();
+
+        /// <summary>
+        ///     Closes development tools.
+        /// </summary>
+        void CloseDevTools();
     }
 }
