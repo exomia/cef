@@ -8,7 +8,7 @@
 
 #endregion
 
-namespace Exomia.CEF.UI
+namespace Exomia.CEF.Interaction
 {
     /// <summary>
     ///     Handler, called when it is invoked from javascript code.

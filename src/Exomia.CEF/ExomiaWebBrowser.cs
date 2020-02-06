@@ -14,8 +14,7 @@ using System.Drawing;
 using System.Threading;
 using CefSharp;
 using CefSharp.OffScreen;
-using Exomia.CEF.Custom;
-using Exomia.CEF.UI;
+using Exomia.CEF.Interaction;
 using Exomia.Framework;
 using Exomia.Framework.Graphics;
 using Exomia.Framework.Input;
@@ -33,6 +32,16 @@ namespace Exomia.CEF
     public sealed class ExomiaWebBrowser : ChromiumWebBrowser, IExomiaWebBrowser
     {
         /// <summary>
+        ///     The exui.
+        /// </summary>
+        private const string EX_UI = "exUi";
+
+        /// <summary>
+        ///     The exuiinput.
+        /// </summary>
+        private const string EX_UI_INPUT = "exUiInput";
+
+        /// <summary>
         ///     The name.
         /// </summary>
         private readonly string _name;
@@ -48,6 +57,11 @@ namespace Exomia.CEF
         private readonly Dictionary<string, object> _namedServices;
 
         /// <summary>
+        ///     The input wrapper.
+        /// </summary>
+        private readonly IUiInputWrapper _uiInputWrapper;
+
+        /// <summary>
         ///     The texture.
         /// </summary>
         private Texture? _texture;
@@ -58,7 +72,7 @@ namespace Exomia.CEF
         private IGraphicsDevice _graphicsDevice;
 
         /// <inheritdoc />
-        public string Name
+        string IComponent.Name
         {
             get { return _name; }
         }
@@ -72,9 +86,10 @@ namespace Exomia.CEF
         /// <summary>
         ///     Initializes a new instance of the <see cref="ExomiaWebBrowser" /> class.
         /// </summary>
-        /// <param name="name">         The name. </param>
-        /// <param name="baseUrl">      (Optional) URL of the base. </param>
-        private ExomiaWebBrowser(string name, string baseUrl = "about:blank")
+        /// <param name="name">    The name. </param>
+        /// <param name="baseUrl"> (Optional) URL of the base. </param>
+        /// <param name="debug">   (Optional) True to debug. </param>
+        private ExomiaWebBrowser(string name, string baseUrl = "about:blank", bool debug = false)
             : base(
                 baseUrl,
                 new BrowserSettings
@@ -85,7 +100,7 @@ namespace Exomia.CEF
                     JavascriptAccessClipboard = CefState.Disabled,
                     JavascriptDomPaste        = CefState.Enabled,
                     ImageLoading              = CefState.Enabled,
-                    WebSecurity               = CefState.Enabled,
+                    WebSecurity               = CefState.Disabled,
                     LocalStorage              = CefState.Disabled,
                     RemoteFonts               = CefState.Disabled,
                     WebGl                     = CefState.Disabled,
@@ -105,17 +120,26 @@ namespace Exomia.CEF
 
             MenuHandler = new CustomContextMenuHandler();
 
-            ConsoleMessage += (sender, args) =>
+            if (debug)
             {
-                Console.WriteLine("[{0}:{1}] [{2}] {3}", args.Level, args.Line, args.Source, args.Message);
-            };
+                ConsoleMessage += (sender, args) =>
+                {
+                    Console.WriteLine("[{0}:{1}] [{2}] {3}", args.Level, args.Line, args.Source, args.Message);
+                };
+                JavascriptObjectRepository.ObjectBoundInJavascript += (sender, e) =>
+                {
+                    Console.WriteLine(
+                        $"Object '{e.ObjectName}' was bound successfully. (cached: {e.IsCached}; alreadyBound: {e.AlreadyBound})");
+                };
+            }
 
+            _uiInputWrapper = new UiInputWrapper();
             JavascriptObjectRepository.ResolveObject += (sender, e) =>
             {
                 if (e.ObjectName == null) { return; }
                 switch (e.ObjectName)
                 {
-                    case "exui":
+                    case EX_UI:
                         {
                             lock (_services)
                             {
@@ -130,19 +154,10 @@ namespace Exomia.CEF
                             }
                         }
                         break;
-                    case "exuiinput":
+                    case EX_UI_INPUT:
                         {
-                            lock (_services)
-                            {
-                                e.ObjectRepository.Register(
-                                    e.ObjectName,
-                                    _services.TryGetValue(typeof(IInputHandler), out object service)
-                                        ? service
-                                        : throw new KeyNotFoundException(
-                                            $"No '{nameof(IInputHandler)}' available! Use the method '{nameof(IExomiaWebBrowser.SetUiInputHandler)}' first!"),
-                                    true,
-                                    BindingOptions.DefaultBinder);
-                            }
+                            JavascriptObjectRepository.Register(
+                                EX_UI_INPUT, _uiInputWrapper, true, BindingOptions.DefaultBinder);
                         }
                         break;
                     default:
@@ -162,16 +177,10 @@ namespace Exomia.CEF
                         break;
                 }
             };
-
-            JavascriptObjectRepository.ObjectBoundInJavascript += (sender, e) =>
-            {
-                Console.WriteLine(
-                    $"Object '{e.ObjectName}' was bound successfully. (cached: {e.IsCached}; alreadyBound: {e.AlreadyBound})");
-            };
         }
 
         /// <inheritdoc />
-        public void ShowDevTools()
+        void IExomiaWebBrowser.ShowDevTools()
         {
             GetBrowser()
                 .GetHost()
@@ -179,7 +188,7 @@ namespace Exomia.CEF
         }
 
         /// <inheritdoc />
-        public void CloseDevTools()
+        void IExomiaWebBrowser.CloseDevTools()
         {
             GetBrowser()
                 .GetHost()
@@ -191,36 +200,31 @@ namespace Exomia.CEF
         {
             lock (_services)
             {
+                UiActions uiActions = new UiActions();
                 if (_services.TryGetValue(typeof(IUiActionHandler), out object service))
                 {
                     if (service is IDisposable disposable)
                     {
                         disposable.Dispose();
                     }
-                    JavascriptObjectRepository.UnRegister("exui");
+                    JavascriptObjectRepository.UnRegister(EX_UI);
+                    _services[typeof(IUiActionHandler)] = uiActions;
+                    _services[typeof(IJsUiActions)]     = uiActions;
                 }
-                UiActions uiActions = new UiActions();
-                _services.Add(typeof(IUiActionHandler), uiActions);
-                _services.Add(typeof(IJsUiActions), uiActions);
+                else
+                {
+                    _services.Add(typeof(IUiActionHandler), uiActions);
+                    _services.Add(typeof(IJsUiActions), uiActions);
+                }
+
                 return uiActions;
             }
         }
 
         /// <inheritdoc />
-        void IExomiaWebBrowser.SetUiInputHandler(IInputHandler inputHandler)
+        void IExomiaWebBrowser.SetUiInputHandler(IInputHandler? inputHandler)
         {
-            lock (_services)
-            {
-                if (!_services.ContainsKey(typeof(IInputHandler)))
-                {
-                    _services.Add(typeof(IInputHandler), inputHandler);
-                }
-                else
-                {
-                    JavascriptObjectRepository.UnRegister("exuiinput");
-                    _services[typeof(IInputHandler)] = inputHandler;
-                }
-            }
+            _uiInputWrapper.InputHandler = inputHandler;
         }
 
         /// <inheritdoc />
@@ -229,25 +233,25 @@ namespace Exomia.CEF
             if (item == null) { throw new ArgumentNullException(nameof(item)); }
             lock (_namedServices)
             {
-                if (!_namedServices.ContainsKey(name))
+                if (_namedServices.TryGetValue(name, out object service))
                 {
-                    _namedServices.Add(name, item);
-                }
-                else
-                {
-                    if (_namedServices[name] is IDisposable disposable)
+                    if (service is IDisposable disposable)
                     {
                         disposable.Dispose();
                     }
                     JavascriptObjectRepository.UnRegister(name);
                     _namedServices[name] = item;
                 }
+                else
+                {
+                    _namedServices.Add(name, item);
+                }
                 return item;
             }
         }
 
         /// <inheritdoc />
-        public void Initialize(IServiceRegistry registry)
+        void IInitializable.Initialize(IServiceRegistry registry)
         {
             _graphicsDevice = registry.GetService<IGraphicsDevice>();
             _graphicsDevice.ResizeFinished += v =>
@@ -258,7 +262,7 @@ namespace Exomia.CEF
             };
             Size = new Size((int)_graphicsDevice.Viewport.Width, (int)_graphicsDevice.Viewport.Height);
 
-            if (!IsBrowserInitialized)
+            while (!IsBrowserInitialized)
             {
                 ManualResetEventSlim mre = new ManualResetEventSlim(IsBrowserInitialized);
 
@@ -269,7 +273,7 @@ namespace Exomia.CEF
 
                 BrowserInitialized += OnBrowserInitialized;
 
-                mre.Wait();
+                mre.Wait(2000);
 
                 BrowserInitialized -= OnBrowserInitialized;
             }
@@ -277,124 +281,20 @@ namespace Exomia.CEF
             Paint += OnPaint;
         }
 
-        /// <inheritdoc />
-        void IRawInputHandler.Input_KeyEvent(ref Message message)
-        {
-            GetBrowser()
-                .GetHost()
-                .SendKeyEvent(message.Msg, (int)message.WParam.ToInt64(), (int)message.LParam.ToInt64());
-        }
-
-        /// <inheritdoc />
-        void IRawInputHandler.Input_MouseClick(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
-        {
-            if ((buttons & MouseButtons.Left) == MouseButtons.Left)
-            {
-                GetBrowser()
-                    .GetHost()
-                    .SendMouseClickEvent(x, y, MouseButtonType.Left, true, clicks, CefEventFlags.LeftMouseButton);
-            }
-            if ((buttons & MouseButtons.Middle) == MouseButtons.Middle)
-            {
-                GetBrowser()
-                    .GetHost()
-                    .SendMouseClickEvent(x, y, MouseButtonType.Middle, true, clicks, CefEventFlags.MiddleMouseButton);
-            }
-            if ((buttons & MouseButtons.Right) == MouseButtons.Right)
-            {
-                GetBrowser()
-                    .GetHost()
-                    .SendMouseClickEvent(x, y, MouseButtonType.Right, true, clicks, CefEventFlags.RightMouseButton);
-            }
-        }
-
-        /// <inheritdoc />
-        void IRawInputHandler.Input_MouseDown(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
-        {
-            if ((buttons & MouseButtons.Left) == MouseButtons.Left)
-            {
-                GetBrowser()
-                    .GetHost()
-                    .SendMouseClickEvent(x, y, MouseButtonType.Left, false, clicks, CefEventFlags.LeftMouseButton);
-            }
-            if ((buttons & MouseButtons.Middle) == MouseButtons.Middle)
-            {
-                GetBrowser()
-                    .GetHost()
-                    .SendMouseClickEvent(x, y, MouseButtonType.Middle, false, clicks, CefEventFlags.MiddleMouseButton);
-            }
-            if ((buttons & MouseButtons.Right) == MouseButtons.Right)
-            {
-                GetBrowser()
-                    .GetHost()
-                    .SendMouseClickEvent(x, y, MouseButtonType.Right, false, clicks, CefEventFlags.RightMouseButton);
-            }
-        }
-
-        /// <inheritdoc />
-        void IRawInputHandler.Input_MouseMove(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
-        {
-            CefEventFlags cefEventFlags = CefEventFlags.None;
-            if ((buttons & MouseButtons.Left) == MouseButtons.Left)
-            {
-                cefEventFlags |= CefEventFlags.LeftMouseButton;
-            }
-            if ((buttons & MouseButtons.Middle) == MouseButtons.Middle)
-            {
-                cefEventFlags |= CefEventFlags.MiddleMouseButton;
-            }
-            if ((buttons & MouseButtons.Right) == MouseButtons.Right)
-            {
-                cefEventFlags |= CefEventFlags.RightMouseButton;
-            }
-            GetBrowser()
-                .GetHost()
-                .SendMouseMoveEvent(x, y, false, cefEventFlags);
-        }
-
-        /// <inheritdoc />
-        void IRawInputHandler.Input_MouseUp(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
-        {
-            if ((buttons & MouseButtons.Left) == MouseButtons.Left)
-            {
-                GetBrowser()
-                    .GetHost()
-                    .SendMouseClickEvent(x, y, MouseButtonType.Left, true, clicks, CefEventFlags.LeftMouseButton);
-            }
-            if ((buttons & MouseButtons.Middle) == MouseButtons.Middle)
-            {
-                GetBrowser()
-                    .GetHost()
-                    .SendMouseClickEvent(x, y, MouseButtonType.Middle, true, clicks, CefEventFlags.MiddleMouseButton);
-            }
-            if ((buttons & MouseButtons.Right) == MouseButtons.Right)
-            {
-                GetBrowser()
-                    .GetHost()
-                    .SendMouseClickEvent(x, y, MouseButtonType.Right, true, clicks, CefEventFlags.RightMouseButton);
-            }
-        }
-
-        /// <inheritdoc />
-        void IRawInputHandler.Input_MouseWheel(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
-        {
-            GetBrowser()
-                .GetHost()
-                .SendMouseWheelEvent(x, y, 0, wheelDelta, CefEventFlags.None);
-        }
-
         /// <summary>
-        ///     Creates a new <see cref="IExomiaWebBrowser" />.
+        ///     Creates a new IExomiaWebBrowser.
         /// </summary>
-        /// <param name="name">         The name. </param>
-        /// <param name="baseUrl">      (Optional) URL of the base. </param>
+        /// <param name="name"> The name. </param>
+        /// <param name="baseUrl"> (Optional) URL of the base. </param>
+        /// <param name="debug">   (Optional) True to debug. </param>
         /// <returns>
-        ///     An <see cref="IExomiaWebBrowser" />.
+        ///     An IExomiaWebBrowser.
         /// </returns>
         public static IExomiaWebBrowser Create(string name,
-                                               string baseUrl = "about:blank")
+                                               string baseUrl = "about:blank",
+                                               bool   debug   = false)
         {
-            return new ExomiaWebBrowser(name, baseUrl);
+            return new ExomiaWebBrowser(name, baseUrl, debug);
         }
 
         /// <inheritdoc />
@@ -432,5 +332,121 @@ namespace Exomia.CEF
                                new ShaderResourceView1(_graphicsDevice.Device, tex), e.Width, e.Height))
                        ?.Dispose();
         }
+
+        #region input handling
+
+        /// <inheritdoc />
+        void IInputHandler.KeyDown(int keyValue, KeyModifier modifiers)
+        {
+            _uiInputWrapper.KeyDown(keyValue, modifiers);
+        }
+
+        /// <inheritdoc />
+        void IInputHandler.KeyPress(char key)
+        {
+            _uiInputWrapper.KeyPress(key);
+        }
+
+        /// <inheritdoc />
+        void IInputHandler.KeyUp(int keyValue, KeyModifier modifiers)
+        {
+            _uiInputWrapper.KeyUp(keyValue, modifiers);
+        }
+
+        /// <inheritdoc />
+        void IRawInputHandler.KeyEvent(ref Message message)
+        {
+            _uiInputWrapper.KeyEvent(ref message);
+            GetBrowser()
+                .GetHost()
+                .SendKeyEvent(message.Msg, (int)message.WParam.ToInt64(), (int)message.LParam.ToInt64());
+        }
+
+        /// <inheritdoc />
+        void IRawInputHandler.MouseClick(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
+        {
+            _uiInputWrapper.MouseClick(x, y, buttons, clicks, wheelDelta);
+        }
+
+        /// <inheritdoc />
+        void IRawInputHandler.MouseDown(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
+        {
+            _uiInputWrapper.MouseDown(x, y, buttons, clicks, wheelDelta);
+            if ((buttons & MouseButtons.Left) == MouseButtons.Left)
+            {
+                GetBrowser()
+                    .GetHost()
+                    .SendMouseClickEvent(x, y, MouseButtonType.Left, false, clicks, CefEventFlags.LeftMouseButton);
+            }
+            if ((buttons & MouseButtons.Middle) == MouseButtons.Middle)
+            {
+                GetBrowser()
+                    .GetHost()
+                    .SendMouseClickEvent(x, y, MouseButtonType.Middle, false, clicks, CefEventFlags.MiddleMouseButton);
+            }
+            if ((buttons & MouseButtons.Right) == MouseButtons.Right)
+            {
+                GetBrowser()
+                    .GetHost()
+                    .SendMouseClickEvent(x, y, MouseButtonType.Right, false, clicks, CefEventFlags.RightMouseButton);
+            }
+        }
+
+        /// <inheritdoc />
+        void IRawInputHandler.MouseMove(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
+        {
+            _uiInputWrapper.MouseMove(x, y, buttons, clicks, wheelDelta);
+            CefEventFlags cefEventFlags = CefEventFlags.None;
+            if ((buttons & MouseButtons.Left) == MouseButtons.Left)
+            {
+                cefEventFlags |= CefEventFlags.LeftMouseButton;
+            }
+            if ((buttons & MouseButtons.Middle) == MouseButtons.Middle)
+            {
+                cefEventFlags |= CefEventFlags.MiddleMouseButton;
+            }
+            if ((buttons & MouseButtons.Right) == MouseButtons.Right)
+            {
+                cefEventFlags |= CefEventFlags.RightMouseButton;
+            }
+            GetBrowser()
+                .GetHost()
+                .SendMouseMoveEvent(x, y, false, cefEventFlags);
+        }
+
+        /// <inheritdoc />
+        void IRawInputHandler.MouseUp(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
+        {
+            _uiInputWrapper.MouseUp(x, y, buttons, clicks, wheelDelta);
+            if ((buttons & MouseButtons.Left) == MouseButtons.Left)
+            {
+                GetBrowser()
+                    .GetHost()
+                    .SendMouseClickEvent(x, y, MouseButtonType.Left, true, clicks, CefEventFlags.LeftMouseButton);
+            }
+            if ((buttons & MouseButtons.Middle) == MouseButtons.Middle)
+            {
+                GetBrowser()
+                    .GetHost()
+                    .SendMouseClickEvent(x, y, MouseButtonType.Middle, true, clicks, CefEventFlags.MiddleMouseButton);
+            }
+            if ((buttons & MouseButtons.Right) == MouseButtons.Right)
+            {
+                GetBrowser()
+                    .GetHost()
+                    .SendMouseClickEvent(x, y, MouseButtonType.Right, true, clicks, CefEventFlags.RightMouseButton);
+            }
+        }
+
+        /// <inheritdoc />
+        void IRawInputHandler.MouseWheel(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
+        {
+            _uiInputWrapper.MouseWheel(x, y, buttons, clicks, wheelDelta);
+            GetBrowser()
+                .GetHost()
+                .SendMouseWheelEvent(x, y, 0, wheelDelta, CefEventFlags.None);
+        }
+
+        #endregion
     }
 }

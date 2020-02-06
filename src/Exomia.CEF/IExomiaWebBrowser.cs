@@ -8,7 +8,7 @@
 
 #endregion
 
-using Exomia.CEF.UI;
+using Exomia.CEF.Interaction;
 using Exomia.Framework;
 using Exomia.Framework.Graphics;
 using Exomia.Framework.Input;
@@ -18,8 +18,16 @@ namespace Exomia.CEF
     /// <summary>
     ///     Interface for exomia web browser.
     /// </summary>
-    public interface IExomiaWebBrowser : IComponent, IInitializable, IRawInputHandler
+    public interface IExomiaWebBrowser : IComponent, IInitializable, IInputHandler
     {
+        /// <summary>
+        ///     Gets the address.
+        /// </summary>
+        /// <value>
+        ///     The address.
+        /// </value>
+        string Address { get; }
+
         /// <summary>
         ///     Gets the texture.
         /// </summary>
@@ -40,7 +48,7 @@ namespace Exomia.CEF
         ///     Set the user interface input handler.
         /// </summary>
         /// <param name="inputHandler"> The input handler. </param>
-        void SetUiInputHandler(IInputHandler inputHandler);
+        void SetUiInputHandler(IInputHandler? inputHandler);
 
         /// <summary>
         ///     Adds a user interface callback item.

@@ -8,7 +8,7 @@
 
 #endregion
 
-namespace Exomia.CEF.UI
+namespace Exomia.CEF.Interaction
 {
     /// <summary>
     ///     Interface for user interface action handling.

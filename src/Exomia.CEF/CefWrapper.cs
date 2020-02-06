@@ -63,7 +63,7 @@ namespace Exomia.CEF
         {
             if (!Cef.IsInitialized)
             {
-                CefSharpSettings.LegacyJavascriptBindingEnabled      = true;
+                CefSharpSettings.LegacyJavascriptBindingEnabled      = false;
                 CefSharpSettings.ConcurrentTaskExecution             = true;
                 CefSharpSettings.ShutdownOnExit                      = true;
                 CefSharpSettings.SubprocessExitIfParentProcessClosed = true;

@@ -10,7 +10,7 @@
 
 using CefSharp;
 
-namespace Exomia.CEF.Custom
+namespace Exomia.CEF
 {
     class CustomContextMenuHandler : IContextMenuHandler
     {

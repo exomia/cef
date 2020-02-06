@@ -10,7 +10,7 @@
 
 using System;
 
-namespace Exomia.CEF.UI
+namespace Exomia.CEF.Interaction
 {
     /// <summary>
     ///     An ui action class. This class cannot be inherited.

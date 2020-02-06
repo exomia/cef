@@ -8,7 +8,7 @@
 
 #endregion
 
-namespace Exomia.CEF.UI
+namespace Exomia.CEF.Interaction
 {
     /// <summary>
     ///     Interface to communicate with the c# backend.
