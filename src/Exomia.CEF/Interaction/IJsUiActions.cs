@@ -16,7 +16,7 @@ namespace Exomia.CEF.Interaction
     public interface IJsUiActions
     {
         /// <summary>
-        ///     Triggers.
+        ///     [vue-ui] call this function to trigger actions bound to the key value.
         /// </summary>
         /// <param name="key">  The key. </param>
         /// <param name="args"> A variable-length parameters list containing arguments. </param>

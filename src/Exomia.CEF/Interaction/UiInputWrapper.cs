@@ -21,19 +21,55 @@ namespace Exomia.CEF.Interaction
     public sealed class UiInputWrapper : IUiInputWrapper
     {
         /// <summary>
-        ///     The mouse flag.
+        ///     The key down flag.
         /// </summary>
-        private const byte MOUSE_FLAG = 0b0000_0001;
+        private const int KEY_DOWN_FLAG = 1;
+        /// <summary>
+        ///     The key up flag.
+        /// </summary>
+        private const int KEY_UP_FLAG = 1 << 1;
+        /// <summary>
+        ///     The key press flag.
+        /// </summary>
+        private const int KEY_PRESS_FLAG = 1 << 2;
+        /// <summary>
+        ///     The key event flag.
+        /// </summary>
+        private const int KEY_EVENT_FLAG = 1 << 3;
+        /// <summary>
+        ///     The key all flag.
+        /// </summary>
+        private const int KEY_ALL_FLAG = KEY_DOWN_FLAG | KEY_UP_FLAG | KEY_PRESS_FLAG | KEY_EVENT_FLAG;
 
         /// <summary>
-        ///     The key flag.
+        ///     The mouse down flag.
         /// </summary>
-        private const byte KEY_FLAG = 0b0000_0010;
+        private const int MOUSE_DOWN_FLAG = 1 << 4;
+        /// <summary>
+        ///     The mouse up flag.
+        /// </summary>
+        private const int MOUSE_UP_FLAG = 1 << 5;
+        /// <summary>
+        ///     The mouse click flag.
+        /// </summary>
+        private const int MOUSE_CLICK_FLAG = 1 << 6;
+        /// <summary>
+        ///     The mouse move flag.
+        /// </summary>
+        private const int MOUSE_MOVE_FLAG = 1 << 7;
+        /// <summary>
+        ///     The mouse wheel flag.
+        /// </summary>
+        private const int MOUSE_WHEEL_FLAG = 1 << 8;
+        /// <summary>
+        ///     The mouse all flag.
+        /// </summary>
+        private const int MOUSE_ALL_FLAG = MOUSE_DOWN_FLAG | MOUSE_UP_FLAG | MOUSE_CLICK_FLAG | MOUSE_MOVE_FLAG | MOUSE_WHEEL_FLAG;
 
         /// <summary>
         ///     The state.
         /// </summary>
-        private int _state = MOUSE_FLAG | KEY_FLAG;
+        private int _state = MOUSE_ALL_FLAG | KEY_ALL_FLAG;
 
         /// <summary>
         ///     The input handler.
@@ -46,7 +82,7 @@ namespace Exomia.CEF.Interaction
         /// <inheritdoc />
         void IInputHandler.KeyDown(int keyValue, KeyModifier modifiers)
         {
-            if ((_state & KEY_FLAG) == KEY_FLAG)
+            if ((_state & KEY_DOWN_FLAG) == KEY_DOWN_FLAG)
             {
                 InputHandler?.KeyDown(keyValue, modifiers);
             }
@@ -55,7 +91,7 @@ namespace Exomia.CEF.Interaction
         /// <inheritdoc />
         void IInputHandler.KeyPress(char key)
         {
-            if ((_state & KEY_FLAG) == KEY_FLAG)
+            if ((_state & KEY_PRESS_FLAG) == KEY_PRESS_FLAG)
             {
                 InputHandler?.KeyPress(key);
             }
@@ -64,7 +100,7 @@ namespace Exomia.CEF.Interaction
         /// <inheritdoc />
         void IInputHandler.KeyUp(int keyValue, KeyModifier modifiers)
         {
-            if ((_state & KEY_FLAG) == KEY_FLAG)
+            if ((_state & KEY_UP_FLAG) == KEY_UP_FLAG)
             {
                 InputHandler?.KeyUp(keyValue, modifiers);
             }
@@ -73,71 +109,73 @@ namespace Exomia.CEF.Interaction
         /// <inheritdoc />
         void IRawInputHandler.KeyEvent(ref Message message)
         {
-            if ((_state & KEY_FLAG) == KEY_FLAG)
+            if ((_state & KEY_EVENT_FLAG) == KEY_EVENT_FLAG)
             {
                 InputHandler?.KeyEvent(ref message);
             }
         }
-
-        /// <inheritdoc />
-        void IRawInputHandler.MouseClick(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
-        {
-            if ((_state & MOUSE_FLAG) == MOUSE_FLAG)
-            {
-                InputHandler?.MouseClick(x, y, buttons, clicks, wheelDelta);
-            }
-        }
-
+        
         /// <inheritdoc />
         void IRawInputHandler.MouseDown(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
         {
-            if ((_state & MOUSE_FLAG) == MOUSE_FLAG)
+            if ((_state & MOUSE_DOWN_FLAG) == MOUSE_DOWN_FLAG)
             {
                 InputHandler?.MouseDown(x, y, buttons, clicks, wheelDelta);
             }
         }
-
-        /// <inheritdoc />
-        void IRawInputHandler.MouseMove(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
-        {
-            if ((_state & MOUSE_FLAG) == MOUSE_FLAG)
-            {
-                InputHandler?.MouseMove(x, y, buttons, clicks, wheelDelta);
-            }
-        }
-
         /// <inheritdoc />
         void IRawInputHandler.MouseUp(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
         {
-            if ((_state & MOUSE_FLAG) == MOUSE_FLAG)
+            if ((_state & MOUSE_UP_FLAG) == MOUSE_UP_FLAG)
             {
                 InputHandler?.MouseUp(x, y, buttons, clicks, wheelDelta);
             }
         }
 
         /// <inheritdoc />
+        void IRawInputHandler.MouseClick(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
+        {
+            if ((_state & MOUSE_CLICK_FLAG) == MOUSE_CLICK_FLAG)
+            {
+                InputHandler?.MouseClick(x, y, buttons, clicks, wheelDelta);
+            }
+        }
+        
+        /// <inheritdoc />
+        void IRawInputHandler.MouseMove(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
+        {
+            if ((_state & MOUSE_MOVE_FLAG) == MOUSE_MOVE_FLAG)
+            {
+                InputHandler?.MouseMove(x, y, buttons, clicks, wheelDelta);
+            }
+        }
+        
+        /// <inheritdoc />
         void IRawInputHandler.MouseWheel(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
         {
-            if ((_state & MOUSE_FLAG) == MOUSE_FLAG)
+            if ((_state & MOUSE_WHEEL_FLAG) == MOUSE_WHEEL_FLAG)
             {
                 InputHandler?.MouseWheel(x, y, buttons, clicks, wheelDelta);
             }
         }
 
         /// <summary>
-        ///     [vue-ui] call this function to set the focus on an ui element and stop input forwarding.
+        ///     [vue-ui] call this function to disable input forwarding, for a specific flag, to the <see cref="InputHandler"/>.
         /// </summary>
-        /// <param name="uiFocus"> True to focus an ui element. </param>
-        public void SetFocus(bool uiFocus)
+        /// <param name="flag"> the flag to set </param>
+        public void SetFlag(int flag)
         {
-            if (uiFocus)
-            {
-                Interlocked.CompareExchange(ref _state, 0, MOUSE_FLAG | KEY_FLAG);
-            }
-            else
-            {
-                Interlocked.CompareExchange(ref _state, MOUSE_FLAG | KEY_FLAG, 0);
-            }
+            int state = _state;
+            Interlocked.Exchange(ref _state, state | flag);
+        }
+        /// <summary>
+        ///     [vue-ui] call this function to enable input forwarding, for a specific flag, to the <see cref="InputHandler"/>.
+        /// </summary>
+        /// <param name="flag"> the flag to remove</param>
+        public void RemoveFlag(int flag)
+        {
+            int state = _state;
+            Interlocked.Exchange(ref _state, state & ~flag);
         }
     }
 }

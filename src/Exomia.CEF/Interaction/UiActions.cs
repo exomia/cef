@@ -17,10 +17,6 @@ namespace Exomia.CEF.Interaction
     /// </summary>
     public sealed class UiActions : IJsUiActions, IUiActionHandler, IDisposable
     {
-        /// <summary>
-        ///     Occurs when User interface Action Handler. Trigger.
-        /// </summary>
-        /// ###
         /// <inheritdoc />
         event TriggerHandler? IUiActionHandler.Trigger
         {
@@ -50,6 +46,10 @@ namespace Exomia.CEF.Interaction
 
         private bool _disposed;
 
+        /// <summary>
+        ///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged/managed resources.
+        /// </summary>
+        /// <param name="disposing">  to release both managed and unmanaged resources;  to release only unmanaged resources. </param>
         private void Dispose(bool disposing)
         {
             if (!_disposed)
