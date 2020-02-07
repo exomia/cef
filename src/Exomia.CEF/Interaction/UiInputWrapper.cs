@@ -24,18 +24,22 @@ namespace Exomia.CEF.Interaction
         ///     The key down flag.
         /// </summary>
         private const int KEY_DOWN_FLAG = 1;
+
         /// <summary>
         ///     The key up flag.
         /// </summary>
         private const int KEY_UP_FLAG = 1 << 1;
+
         /// <summary>
         ///     The key press flag.
         /// </summary>
         private const int KEY_PRESS_FLAG = 1 << 2;
+
         /// <summary>
         ///     The key event flag.
         /// </summary>
         private const int KEY_EVENT_FLAG = 1 << 3;
+
         /// <summary>
         ///     The key all flag.
         /// </summary>
@@ -45,26 +49,32 @@ namespace Exomia.CEF.Interaction
         ///     The mouse down flag.
         /// </summary>
         private const int MOUSE_DOWN_FLAG = 1 << 4;
+
         /// <summary>
         ///     The mouse up flag.
         /// </summary>
         private const int MOUSE_UP_FLAG = 1 << 5;
+
         /// <summary>
         ///     The mouse click flag.
         /// </summary>
         private const int MOUSE_CLICK_FLAG = 1 << 6;
+
         /// <summary>
         ///     The mouse move flag.
         /// </summary>
         private const int MOUSE_MOVE_FLAG = 1 << 7;
+
         /// <summary>
         ///     The mouse wheel flag.
         /// </summary>
         private const int MOUSE_WHEEL_FLAG = 1 << 8;
+
         /// <summary>
         ///     The mouse all flag.
         /// </summary>
-        private const int MOUSE_ALL_FLAG = MOUSE_DOWN_FLAG | MOUSE_UP_FLAG | MOUSE_CLICK_FLAG | MOUSE_MOVE_FLAG | MOUSE_WHEEL_FLAG;
+        private const int MOUSE_ALL_FLAG =
+            MOUSE_DOWN_FLAG | MOUSE_UP_FLAG | MOUSE_CLICK_FLAG | MOUSE_MOVE_FLAG | MOUSE_WHEEL_FLAG;
 
         /// <summary>
         ///     The state.
@@ -114,7 +124,7 @@ namespace Exomia.CEF.Interaction
                 InputHandler?.KeyEvent(ref message);
             }
         }
-        
+
         /// <inheritdoc />
         void IRawInputHandler.MouseDown(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
         {
@@ -123,6 +133,7 @@ namespace Exomia.CEF.Interaction
                 InputHandler?.MouseDown(x, y, buttons, clicks, wheelDelta);
             }
         }
+
         /// <inheritdoc />
         void IRawInputHandler.MouseUp(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
         {
@@ -140,7 +151,7 @@ namespace Exomia.CEF.Interaction
                 InputHandler?.MouseClick(x, y, buttons, clicks, wheelDelta);
             }
         }
-        
+
         /// <inheritdoc />
         void IRawInputHandler.MouseMove(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
         {
@@ -149,7 +160,7 @@ namespace Exomia.CEF.Interaction
                 InputHandler?.MouseMove(x, y, buttons, clicks, wheelDelta);
             }
         }
-        
+
         /// <inheritdoc />
         void IRawInputHandler.MouseWheel(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
         {
@@ -160,7 +171,7 @@ namespace Exomia.CEF.Interaction
         }
 
         /// <summary>
-        ///     [vue-ui] call this function to disable input forwarding, for a specific flag, to the <see cref="InputHandler"/>.
+        ///     [vue-ui] call this function to disable input forwarding, for a specific flag, to the <see cref="InputHandler" />.
         /// </summary>
         /// <param name="flag"> the flag to set </param>
         public void SetFlag(int flag)
@@ -168,8 +179,9 @@ namespace Exomia.CEF.Interaction
             int state = _state;
             Interlocked.Exchange(ref _state, state | flag);
         }
+
         /// <summary>
-        ///     [vue-ui] call this function to enable input forwarding, for a specific flag, to the <see cref="InputHandler"/>.
+        ///     [vue-ui] call this function to enable input forwarding, for a specific flag, to the <see cref="InputHandler" />.
         /// </summary>
         /// <param name="flag"> the flag to remove</param>
         public void RemoveFlag(int flag)
