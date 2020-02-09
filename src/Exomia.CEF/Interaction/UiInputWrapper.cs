@@ -174,6 +174,21 @@ namespace Exomia.CEF.Interaction
         ///     [vue-ui] call this function to disable input forwarding, for a specific flag, to the <see cref="InputHandler" />.
         /// </summary>
         /// <param name="flag"> the flag to set </param>
+        /// <remarks>
+        ///     flags:<br />
+        ///         KEY_DOWN = 1,<br />
+        ///         KEY_UP = 2,<br />
+        ///         KEY_PRESS = 4,<br />
+        ///         KEY_EVENT = 8,<br />
+        ///         KEY_ALL = 15,<br />
+        ///         MOUSE_DOWN = 16,<br />
+        ///         MOUSE_UP = 32,<br />
+        ///         MOUSE_CLICK = 64,<br />
+        ///         MOUSE_MOVE = 128,<br />
+        ///         MOUSE_WHEEL = 256,<br />
+        ///         MOUSE_ALL = 496,<br />
+        ///         ALL = 511<br />
+        /// </remarks>
         public void SetFlag(int flag)
         {
             int state = _state;
@@ -184,6 +199,21 @@ namespace Exomia.CEF.Interaction
         ///     [vue-ui] call this function to enable input forwarding, for a specific flag, to the <see cref="InputHandler" />.
         /// </summary>
         /// <param name="flag"> the flag to remove</param>
+        /// <remarks>
+        ///     flags:<br />
+        ///         KEY_DOWN = 1,<br />
+        ///         KEY_UP = 2,<br />
+        ///         KEY_PRESS = 4,<br />
+        ///         KEY_EVENT = 8,<br />
+        ///         KEY_ALL = 15,<br />
+        ///         MOUSE_DOWN = 16,<br />
+        ///         MOUSE_UP = 32,<br />
+        ///         MOUSE_CLICK = 64,<br />
+        ///         MOUSE_MOVE = 128,<br />
+        ///         MOUSE_WHEEL = 256,<br />
+        ///         MOUSE_ALL = 496,<br />
+        ///         ALL = 511<br />
+        /// </remarks>
         public void RemoveFlag(int flag)
         {
             int state = _state;
