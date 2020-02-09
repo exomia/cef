@@ -200,19 +200,19 @@ namespace Exomia.CEF.Interaction
         /// </summary>
         /// <param name="flag"> the flag to remove</param>
         /// <remarks>
-        ///     flags:<br />
-        ///         KEY_DOWN = 1,<br />
-        ///         KEY_UP = 2,<br />
-        ///         KEY_PRESS = 4,<br />
-        ///         KEY_EVENT = 8,<br />
-        ///         KEY_ALL = 15,<br />
-        ///         MOUSE_DOWN = 16,<br />
-        ///         MOUSE_UP = 32,<br />
-        ///         MOUSE_CLICK = 64,<br />
-        ///         MOUSE_MOVE = 128,<br />
-        ///         MOUSE_WHEEL = 256,<br />
-        ///         MOUSE_ALL = 496,<br />
-        ///         ALL = 511<br />
+        ///     <para>flags:</para>
+        ///         <para>KEY_DOWN = 1,</para>
+        ///         <para>KEY_UP = 2,</para>
+        ///         <para>KEY_PRESS = 4,</para>
+        ///         <para>KEY_EVENT = 8,</para>
+        ///         <para>KEY_ALL = 15,</para>
+        ///         <para>MOUSE_DOWN = 16,</para>
+        ///         <para>MOUSE_UP = 32,</para>
+        ///         <para>MOUSE_CLICK = 64,</para>
+        ///         <para>MOUSE_MOVE = 128,</para>
+        ///         <para>MOUSE_WHEEL = 256,</para>
+        ///         <para>MOUSE_ALL = 496,</para>
+        ///         <para>ALL = 511</para>
         /// </remarks>
         public void RemoveFlag(int flag)
         {
