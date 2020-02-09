@@ -175,19 +175,19 @@ namespace Exomia.CEF.Interaction
         /// </summary>
         /// <param name="flag"> the flag to set </param>
         /// <remarks>
-        ///     flags:<para />
-        ///         KEY_DOWN = 1,<para />
-        ///         KEY_UP = 2,<para />
-        ///         KEY_PRESS = 4,<para />
-        ///         KEY_EVENT = 8,<para />
-        ///         KEY_ALL = 15,<para />
-        ///         MOUSE_DOWN = 16,<para />
-        ///         MOUSE_UP = 32,<para />
-        ///         MOUSE_CLICK = 64,<para />
-        ///         MOUSE_MOVE = 128,<para />
-        ///         MOUSE_WHEEL = 256,<para />
-        ///         MOUSE_ALL = 496,<para />
-        ///         ALL = 511
+        /// \tflags:<para />
+        /// \t\tKEY_DOWN = 1,<para />
+        /// \t\tKEY_UP = 2,<para />
+        /// \t\tKEY_PRESS = 4,<para />
+        /// \t\tKEY_EVENT = 8,<para />
+        /// \t\tKEY_ALL = 15,<para />
+        /// \t\tMOUSE_DOWN = 16,<para />
+        /// \t\tMOUSE_UP = 32,<para />
+        /// \t\tMOUSE_CLICK = 64,<para />
+        /// \t\tMOUSE_MOVE = 128,<para />
+        /// \t\tMOUSE_WHEEL = 256,<para />
+        /// \t\tMOUSE_ALL = 496,<para />
+        /// \t\tALL = 511
         /// </remarks>
         public void SetFlag(int flag)
         {
@@ -200,19 +200,19 @@ namespace Exomia.CEF.Interaction
         /// </summary>
         /// <param name="flag"> the flag to remove</param>
         /// <remarks>
-        ///     flags:<para />
-        ///         KEY_DOWN = 1,<para />
-        ///         KEY_UP = 2,<para />
-        ///         KEY_PRESS = 4,<para />
-        ///         KEY_EVENT = 8,<para />
-        ///         KEY_ALL = 15,<para />
-        ///         MOUSE_DOWN = 16,<para />
-        ///         MOUSE_UP = 32,<para />
-        ///         MOUSE_CLICK = 64,<para />
-        ///         MOUSE_MOVE = 128,<para />
-        ///         MOUSE_WHEEL = 256,<para />
-        ///         MOUSE_ALL = 496,<para />
-        ///         ALL = 511
+        /// \tflags:<para />
+        /// \t\tKEY_DOWN = 1,<para />
+        /// \t\tKEY_UP = 2,<para />
+        /// \t\tKEY_PRESS = 4,<para />
+        /// \t\tKEY_EVENT = 8,<para />
+        /// \t\tKEY_ALL = 15,<para />
+        /// \t\tMOUSE_DOWN = 16,<para />
+        /// \t\tMOUSE_UP = 32,<para />
+        /// \t\tMOUSE_CLICK = 64,<para />
+        /// \t\tMOUSE_MOVE = 128,<para />
+        /// \t\tMOUSE_WHEEL = 256,<para />
+        /// \t\tMOUSE_ALL = 496,<para />
+        /// \t\tALL = 511
         /// </remarks>
         public void RemoveFlag(int flag)
         {
