@@ -4,7 +4,7 @@
     <Authors>exomia</Authors>
     <Description>a wrapper around cef for use in the exomia framework to build an ui</Description>
     <Copyright>Copyright © $([System.DateTime]::Now.Year) exomia</Copyright>
-    <Version>1.0.0.0</Version>
+    <Version>1.0.0.1</Version>
     <PackageProjectUrl>https://github.com/exomia/cef</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -59,7 +59,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CefSharp.OffScreen" Version="79.1.350" />
+    <PackageReference Include="CefSharp.OffScreen" Version="79.1.350">
+      <PrivateAssets>none</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup Condition="'$(Platform)'=='AnyCPU'">
