@@ -51,7 +51,7 @@ namespace Exomia.CEF
         /// <returns>
         ///     An <see cref="IDisposable" />.
         /// </returns>
-        public static IDisposable CreateAndInitialize(Action<CefSettings>? overrideSettings = null)
+        public static IDisposable Create(Action<CefSettings>? overrideSettings = null)
         {
             CefWrapper wrapper = new CefWrapper();
             wrapper.InitializeCef(overrideSettings);
