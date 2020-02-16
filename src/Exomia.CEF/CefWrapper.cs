@@ -9,6 +9,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using CefSharp;
@@ -45,27 +46,27 @@ namespace Exomia.CEF
         /// <summary>
         ///     Prevents a default instance of the <see cref="CefWrapper" /> class from being created.
         /// </summary>
-        private CefWrapper(Action<CefSettings>? overrideSettings = null)
+        private CefWrapper(Action<Dictionary<string, string>>? overrideCommandLineSettings)
         {
-            InitializeCef(overrideSettings);
+            InitializeCef(overrideCommandLineSettings);
         }
 
         /// <summary>
         ///     Creates a new <see cref="CefWrapper" />.
         /// </summary>
-        /// <param name="overrideSettings"> Override settings. </param>
+        /// <param name="overrideCommandLineSettings"> Override settings. </param>
         /// <returns>
         ///     An <see cref="IDisposable" />.
         /// </returns>
-        public static IDisposable Create(Action<CefSettings>? overrideSettings = null)
+        public static IDisposable Create(Action<Dictionary<string,string>>? overrideCommandLineSettings = null)
         {
-            return new CefWrapper(overrideSettings);
+            return new CefWrapper(overrideCommandLineSettings);
         }
 
         /// <summary>
         ///     Initializes the cef.
         /// </summary>
-        private void InitializeCef(Action<CefSettings>? overrideSettings)
+        private void InitializeCef(Action<Dictionary<string, string>>? overrideCommandLineSettings)
         {
             if (!Cef.IsInitialized)
             {
@@ -86,7 +87,7 @@ namespace Exomia.CEF
                     LogSeverity                = LogSeverity.Error,
                     WindowlessRenderingEnabled = true
                 };
-                overrideSettings?.Invoke(settings);
+                overrideCommandLineSettings?.Invoke(settings.CefCommandLineArgs);
                 Cef.Initialize(settings, true, browserProcessHandler: null);
             }
         }
