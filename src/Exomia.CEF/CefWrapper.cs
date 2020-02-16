@@ -23,11 +23,22 @@ namespace Exomia.CEF
     /// </summary>
     public class CefWrapper : IDisposable
     {
+        /// <summary>
+        ///     Initializes static members of the <see cref="CefWrapper"/> class.
+        /// </summary>
         static CefWrapper()
         {
             AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
         }
 
+        /// <summary>
+        ///     Current domain on assembly resolve.
+        /// </summary>
+        /// <param name="sender"> Source of the event. </param>
+        /// <param name="args">   Resolve event information. </param>
+        /// <returns>
+        ///     An Assembly?
+        /// </returns>
         private static Assembly? CurrentDomainOnAssemblyResolve(object sender, ResolveEventArgs args)
         {
             if (args.Name.StartsWith("CefSharp"))
@@ -46,27 +57,29 @@ namespace Exomia.CEF
         /// <summary>
         ///     Prevents a default instance of the <see cref="CefWrapper" /> class from being created.
         /// </summary>
-        private CefWrapper(Action<Dictionary<string, string>>? overrideCommandLineSettings)
+        /// <param name="commandLineSettings"> Command line settings. </param>
+        private CefWrapper(Action<Dictionary<string, string>>? commandLineSettings)
         {
-            InitializeCef(overrideCommandLineSettings);
+            InitializeCef(commandLineSettings);
         }
 
         /// <summary>
         ///     Creates a new <see cref="CefWrapper" />.
         /// </summary>
-        /// <param name="overrideCommandLineSettings"> Override settings. </param>
+        /// <param name="commandLineSettings"> (Optional) Command line settings. </param>
         /// <returns>
         ///     An <see cref="IDisposable" />.
         /// </returns>
-        public static IDisposable Create(Action<Dictionary<string,string>>? overrideCommandLineSettings = null)
+        public static IDisposable Create(Action<Dictionary<string,string>>? commandLineSettings = null)
         {
-            return new CefWrapper(overrideCommandLineSettings);
+            return new CefWrapper(commandLineSettings);
         }
 
         /// <summary>
         ///     Initializes the cef.
         /// </summary>
-        private void InitializeCef(Action<Dictionary<string, string>>? overrideCommandLineSettings)
+        /// <param name="commandLineSettings"> Command line settings. </param>
+        private void InitializeCef(Action<Dictionary<string, string>>? commandLineSettings)
         {
             if (!Cef.IsInitialized)
             {
@@ -87,22 +100,20 @@ namespace Exomia.CEF
                     LogSeverity                = LogSeverity.Error,
                     WindowlessRenderingEnabled = true
                 };
-                overrideCommandLineSettings?.Invoke(settings.CefCommandLineArgs);
+                commandLineSettings?.Invoke(settings.CefCommandLineArgs);
                 Cef.Initialize(settings, true, browserProcessHandler: null);
             }
         }
 
         #region IDisposable Support
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         ~CefWrapper()
         {
             Dispose();
         }
 
-        /// <summary>
-        ///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged/managed resources.
-        /// </summary>
+        /// <inheritdoc/>
         public void Dispose()
         {
             if (Cef.IsInitialized)
