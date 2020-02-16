@@ -12,6 +12,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using CefSharp;
+using CefSharp.Internals;
 using CefSharp.OffScreen;
 
 namespace Exomia.CEF
