@@ -23,26 +23,31 @@ namespace Exomia.CEF
     {
         static CefWrapper()
         {
-            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
-            {
-                if (args.Name.StartsWith("CefSharp"))
-                {
-                    string archSpecificPath = Path.Combine(
-                        AppDomain.CurrentDomain.SetupInformation.ApplicationBase,
-                        Environment.Is64BitProcess ? "x64" : "x86", args.Name.Split(new[] { ',' }, 2)[0] + ".dll");
-                    return File.Exists(archSpecificPath)
-                        ? Assembly.LoadFile(archSpecificPath)
-                        : null;
-                }
+            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
+        }
 
-                return null;
-            };
+        private static Assembly? CurrentDomainOnAssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            if (args.Name.StartsWith("CefSharp"))
+            {
+                string archSpecificPath = Path.Combine(
+                    AppDomain.CurrentDomain.SetupInformation.ApplicationBase,
+                    Environment.Is64BitProcess ? "x64" : "x86", args.Name.Split(new[] { ',' }, 2)[0] + ".dll");
+                return File.Exists(archSpecificPath)
+                    ? Assembly.LoadFile(archSpecificPath)
+                    : null;
+            }
+
+            return null;
         }
 
         /// <summary>
         ///     Prevents a default instance of the <see cref="CefWrapper" /> class from being created.
         /// </summary>
-        private CefWrapper() { }
+        private CefWrapper(Action<CefSettings>? overrideSettings = null)
+        {
+            InitializeCef(overrideSettings);
+        }
 
         /// <summary>
         ///     Creates a new <see cref="CefWrapper" />.
@@ -53,9 +58,7 @@ namespace Exomia.CEF
         /// </returns>
         public static IDisposable Create(Action<CefSettings>? overrideSettings = null)
         {
-            CefWrapper wrapper = new CefWrapper();
-            wrapper.InitializeCef(overrideSettings);
-            return wrapper;
+            return new CefWrapper(overrideSettings);
         }
 
         /// <summary>
