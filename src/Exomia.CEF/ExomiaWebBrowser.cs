@@ -174,7 +174,7 @@ namespace Exomia.CEF
                                     _services.TryGetValue(typeof(IJsUiStore), out object service)
                                         ? service
                                         : throw new KeyNotFoundException(
-                                            $"No '{nameof(IJsUiActions)}' created! Use the method '{nameof(IExomiaWebBrowser.CreateJsUiActions)}' first!"),
+                                            $"No '{nameof(IJsUiStore)}' available! Use the method '{nameof(IExomiaWebBrowser.SetJsUiStore)}' first!"),
                                     true,
                                     BindingOptions.DefaultBinder);
                             }
@@ -248,7 +248,7 @@ namespace Exomia.CEF
         }
 
         /// <inheritdoc />
-        public void SetJsUiStore(IJsUiStore? jsUiStore)
+        void IExomiaWebBrowser.SetJsUiStore(IJsUiStore? jsUiStore)
         {
             lock (_services)
             {
