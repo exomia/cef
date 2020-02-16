@@ -4,7 +4,7 @@
     <Authors>exomia</Authors>
     <Description>a wrapper around cef for use in the exomia framework to build an ui</Description>
     <Copyright>Copyright © $([System.DateTime]::Now.Year) exomia</Copyright>
-    <Version>1.0.0.1</Version>
+    <Version>1.0.0.2</Version>
     <PackageProjectUrl>https://github.com/exomia/cef</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>

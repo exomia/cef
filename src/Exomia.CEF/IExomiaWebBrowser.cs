@@ -49,6 +49,12 @@ namespace Exomia.CEF
         /// </summary>
         /// <param name="inputHandler"> The input handler. </param>
         void SetUiInputHandler(IInputHandler? inputHandler);
+        
+        /// <summary>
+        ///     Sets the js user interface store.
+        /// </summary>
+        /// <param name="jsUiStore"> The js user interface store. </param>
+        void SetJsUiStore(IJsUiStore? jsUiStore);
 
         /// <summary>
         ///     Adds a user interface callback item.

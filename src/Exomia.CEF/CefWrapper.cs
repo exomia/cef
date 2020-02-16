@@ -37,7 +37,6 @@ namespace Exomia.CEF
 
                 return null;
             };
-            InitializeCef();
         }
 
         /// <summary>
@@ -48,18 +47,21 @@ namespace Exomia.CEF
         /// <summary>
         ///     Creates a new <see cref="CefWrapper" />.
         /// </summary>
+        /// <param name="overrideSettings"> Override settings. </param>
         /// <returns>
         ///     An <see cref="IDisposable" />.
         /// </returns>
-        public static IDisposable Create()
+        public static IDisposable CreateAndInitialize(Action<CefSettings>? overrideSettings = null)
         {
-            return new CefWrapper();
+            CefWrapper wrapper = new CefWrapper();
+            wrapper.InitializeCef(overrideSettings);
+            return wrapper;
         }
 
         /// <summary>
         ///     Initializes the cef.
         /// </summary>
-        private static void InitializeCef()
+        private void InitializeCef(Action<CefSettings>? overrideSettings)
         {
             if (!Cef.IsInitialized)
             {
@@ -80,6 +82,7 @@ namespace Exomia.CEF
                     LogSeverity                = LogSeverity.Error,
                     WindowlessRenderingEnabled = true
                 };
+                overrideSettings?.Invoke(settings);
                 Cef.Initialize(settings, true, browserProcessHandler: null);
             }
         }

@@ -32,14 +32,19 @@ namespace Exomia.CEF
     public sealed class ExomiaWebBrowser : ChromiumWebBrowser, IExomiaWebBrowser
     {
         /// <summary>
-        ///     The exui.
+        ///     The exUi.
         /// </summary>
         private const string EX_UI = "exUi";
 
         /// <summary>
-        ///     The exuiinput.
+        ///     The exUiInput.
         /// </summary>
         private const string EX_UI_INPUT = "exUiInput";
+
+        /// <summary>
+        ///     The exUiStore.
+        /// </summary>
+        private const string EX_UI_STORE = "exUiStore";
 
         /// <summary>
         ///     The name.
@@ -160,6 +165,21 @@ namespace Exomia.CEF
                                 EX_UI_INPUT, _uiInputWrapper, true, BindingOptions.DefaultBinder);
                         }
                         break;
+                    case EX_UI_STORE:
+                        {
+                            lock (_services)
+                            {
+                                e.ObjectRepository.Register(
+                                    e.ObjectName,
+                                    _services.TryGetValue(typeof(IJsUiStore), out object service)
+                                        ? service
+                                        : throw new KeyNotFoundException(
+                                            $"No '{nameof(IJsUiActions)}' created! Use the method '{nameof(IExomiaWebBrowser.CreateJsUiActions)}' first!"),
+                                    true,
+                                    BindingOptions.DefaultBinder);
+                            }
+                        }
+                        break;
                     default:
                         {
                             lock (_namedServices)
@@ -225,6 +245,33 @@ namespace Exomia.CEF
         void IExomiaWebBrowser.SetUiInputHandler(IInputHandler? inputHandler)
         {
             _uiInputWrapper.InputHandler = inputHandler;
+        }
+
+        /// <inheritdoc />
+        public void SetJsUiStore(IJsUiStore? jsUiStore)
+        {
+            lock (_services)
+            {
+                if (_services.TryGetValue(typeof(IJsUiStore), out object service))
+                {
+                    if (service is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
+                    JavascriptObjectRepository.UnRegister(EX_UI_STORE);
+                    if (jsUiStore != null)
+                    {
+                        _services[typeof(IJsUiStore)] = jsUiStore;
+                    }
+                }
+                else
+                {
+                    if (jsUiStore != null)
+                    {
+                        _services.Add(typeof(IJsUiStore), jsUiStore);
+                    }
+                }
+            }
         }
 
         /// <inheritdoc />
