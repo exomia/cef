@@ -8,8 +8,8 @@
 
 #endregion
 
+using CefSharp;
 using Exomia.CEF.Interaction;
-using Exomia.Framework;
 using Exomia.Framework.Graphics;
 using Exomia.Framework.Input;
 
@@ -18,16 +18,8 @@ namespace Exomia.CEF
     /// <summary>
     ///     Interface for exomia web browser.
     /// </summary>
-    public interface IExomiaWebBrowser : IComponent, IInitializable, IInputHandler
+    public interface IExomiaWebBrowser : IWebBrowser
     {
-        /// <summary>
-        ///     Gets the address.
-        /// </summary>
-        /// <value>
-        ///     The address.
-        /// </value>
-        string Address { get; }
-
         /// <summary>
         ///     Gets the texture.
         /// </summary>
@@ -35,6 +27,14 @@ namespace Exomia.CEF
         ///     The texture.
         /// </value>
         Texture? Texture { get; }
+
+        /// <summary>
+        ///     Gets the input handler.
+        /// </summary>
+        /// <value>
+        ///     The input handler.
+        /// </value>
+        IInputHandler InputHandler { get; }
 
         /// <summary>
         ///     Creates js user interface actions.
@@ -49,7 +49,7 @@ namespace Exomia.CEF
         /// </summary>
         /// <param name="inputHandler"> The input handler. </param>
         void SetUiInputHandler(IInputHandler? inputHandler);
-        
+
         /// <summary>
         ///     Sets the js user interface store.
         /// </summary>
@@ -66,21 +66,5 @@ namespace Exomia.CEF
         ///     A T.
         /// </returns>
         T AddUiCallback<T>(string name, T item);
-
-        /// <summary>
-        ///     Loads the given document.
-        /// </summary>
-        /// <param name="url"> The URL to load. </param>
-        void Load(string url);
-
-        /// <summary>
-        ///     Opens development tools.
-        /// </summary>
-        void ShowDevTools();
-
-        /// <summary>
-        ///     Closes development tools.
-        /// </summary>
-        void CloseDevTools();
     }
 }

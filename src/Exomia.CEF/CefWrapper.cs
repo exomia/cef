@@ -9,39 +9,95 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using CefSharp;
-using CefSharp.Internals;
 using CefSharp.OffScreen;
 
 namespace Exomia.CEF
 {
     /// <summary>
-    ///     A cef wrapper for clean initialization and shutdown.
+    ///     A cef settings wrapper. This class cannot be inherited.
     /// </summary>
-    public class CefWrapper : IDisposable
+    public sealed class CefSettingsWrapper : IDisposable
     {
         /// <summary>
-        ///     Initializes static members of the <see cref="CefWrapper"/> class.
+        ///     The cef settings.
         /// </summary>
-        static CefWrapper()
+        public CefSettings Settings { get; }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="CefSettingsWrapper" /> class.
+        /// </summary>
+        /// <param name="cefSettings"> The cef settings. </param>
+        internal CefSettingsWrapper(CefSettings cefSettings)
         {
-            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
+            Settings = cefSettings;
         }
 
         /// <summary>
-        ///     Current domain on assembly resolve.
+        ///     Implicit cast that converts the given CefSettingsWrapper to the CefSettings.
         /// </summary>
-        /// <param name="sender"> Source of the event. </param>
-        /// <param name="args">   Resolve event information. </param>
+        /// <param name="wrapper"> The wrapper. </param>
         /// <returns>
-        ///     An Assembly?
+        ///     The result <see cref="CefSharp.OffScreen.CefSettings" />
         /// </returns>
-        private static Assembly? CurrentDomainOnAssemblyResolve(object sender, ResolveEventArgs args)
+        public static implicit operator CefSettings(CefSettingsWrapper wrapper)
         {
-            if (args.Name.StartsWith("CefSharp"))
+            return wrapper.Settings;
+        }
+
+        #region IDisposable Support
+
+        private bool _disposed;
+
+        private void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    Settings.Dispose();
+                }
+
+                _disposed = true;
+            }
+        }
+
+        /// <inheritdoc />
+        ~CefSettingsWrapper()
+        {
+            Dispose(false);
+        }
+
+        /// <summary>
+        ///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged/managed resources.
+        /// </summary>
+        void IDisposable.Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion
+    }
+
+    /// <summary>
+    ///     A cef wrapper for clean initialization and shutdown.
+    /// </summary>
+    public sealed class CefWrapper : IDisposable
+    {
+        /// <summary>
+        ///     The cef settings.
+        /// </summary>
+        private readonly CefSettingsWrapper? _wrapper;
+
+        /// <summary>
+        ///     Initializes static members of the <see cref="CefWrapper" /> class.
+        /// </summary>
+        static CefWrapper()
+        {
+            AppDomain.CurrentDomain.AssemblyResolve += (s, args) =>
             {
                 string archSpecificPath = Path.Combine(
                     AppDomain.CurrentDomain.SetupInformation.ApplicationBase,
@@ -49,37 +105,14 @@ namespace Exomia.CEF
                 return File.Exists(archSpecificPath)
                     ? Assembly.LoadFile(archSpecificPath)
                     : null;
-            }
-
-            return null;
+            };
         }
 
         /// <summary>
         ///     Prevents a default instance of the <see cref="CefWrapper" /> class from being created.
         /// </summary>
-        /// <param name="commandLineSettings"> Command line settings. </param>
-        private CefWrapper(Action<Dictionary<string, string>>? commandLineSettings)
-        {
-            InitializeCef(commandLineSettings);
-        }
-
-        /// <summary>
-        ///     Creates a new <see cref="CefWrapper" />.
-        /// </summary>
-        /// <param name="commandLineSettings"> (Optional) Command line settings. </param>
-        /// <returns>
-        ///     An <see cref="IDisposable" />.
-        /// </returns>
-        public static IDisposable Create(Action<Dictionary<string,string>>? commandLineSettings = null)
-        {
-            return new CefWrapper(commandLineSettings);
-        }
-
-        /// <summary>
-        ///     Initializes the cef.
-        /// </summary>
-        /// <param name="commandLineSettings"> Command line settings. </param>
-        private void InitializeCef(Action<Dictionary<string, string>>? commandLineSettings)
+        /// <param name="overrideCefSettings"> Override cef settings. </param>
+        private CefWrapper(Action<CefSettingsWrapper>? overrideCefSettings)
         {
             if (!Cef.IsInitialized)
             {
@@ -90,34 +123,52 @@ namespace Exomia.CEF
 
                 Cef.EnableHighDPISupport();
 
-                CefSettings settings = new CefSettings
-                {
-                    BrowserSubprocessPath = Path.Combine(
-                        AppDomain.CurrentDomain.SetupInformation.ApplicationBase,
-                        Environment.Is64BitProcess ? "x64" : "x86",
-                        "CefSharp.BrowserSubprocess.exe"),
-                    MultiThreadedMessageLoop   = true,
-                    LogSeverity                = LogSeverity.Error,
-                    WindowlessRenderingEnabled = true
-                };
-                commandLineSettings?.Invoke(settings.CefCommandLineArgs);
-                Cef.Initialize(settings, true, browserProcessHandler: null);
+                _wrapper = new CefSettingsWrapper(
+                    new CefSettings
+                    {
+                        BrowserSubprocessPath = Path.Combine(
+                            AppDomain.CurrentDomain.SetupInformation.ApplicationBase,
+                            Environment.Is64BitProcess ? "x64" : "x86",
+                            "CefSharp.BrowserSubprocess.exe"),
+                        MultiThreadedMessageLoop   = true,
+                        LogSeverity                = LogSeverity.Error,
+                        WindowlessRenderingEnabled = true
+                    });
+                ;
+                overrideCefSettings?.Invoke(_wrapper);
+                Cef.Initialize(_wrapper, true, browserProcessHandler: null);
             }
+        }
+
+        /// <summary>
+        ///     Creates a new <see cref="CefWrapper" />.
+        /// </summary>
+        /// <param name="overrideCefSettings"> (Optional) Override cef settings. </param>
+        /// <returns>
+        ///     An <see cref="IDisposable" />.
+        /// </returns>
+        public static IDisposable Create(Action<CefSettingsWrapper>? overrideCefSettings = null)
+        {
+            return new CefWrapper(overrideCefSettings);
         }
 
         #region IDisposable Support
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         ~CefWrapper()
         {
             Dispose();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Dispose()
         {
             if (Cef.IsInitialized)
             {
+                if (_wrapper is IDisposable d)
+                {
+                    d.Dispose();
+                }
                 Cef.Shutdown();
             }
             GC.SuppressFinalize(this);

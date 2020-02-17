@@ -29,7 +29,8 @@ namespace Exomia.CEF
     /// <summary>
     ///     An exomia web browser. This class cannot be inherited.
     /// </summary>
-    public sealed class ExomiaWebBrowser : ChromiumWebBrowser, IExomiaWebBrowser
+    public sealed class ExomiaWebBrowser : ChromiumWebBrowser, IExomiaWebBrowser,
+                                           IComponent, IInitializable, IInputHandler
     {
         /// <summary>
         ///     The exUi.
@@ -86,6 +87,12 @@ namespace Exomia.CEF
         Texture? IExomiaWebBrowser.Texture
         {
             get { return _texture; }
+        }
+
+        /// <inheritdoc />
+        IInputHandler IExomiaWebBrowser.InputHandler
+        {
+            get { return this; }
         }
 
         /// <summary>
@@ -197,22 +204,6 @@ namespace Exomia.CEF
                         break;
                 }
             };
-        }
-
-        /// <inheritdoc />
-        void IExomiaWebBrowser.ShowDevTools()
-        {
-            GetBrowser()
-                .GetHost()
-                .ShowDevTools();
-        }
-
-        /// <inheritdoc />
-        void IExomiaWebBrowser.CloseDevTools()
-        {
-            GetBrowser()
-                .GetHost()
-                .CloseDevTools();
         }
 
         /// <inheritdoc />
@@ -329,13 +320,13 @@ namespace Exomia.CEF
         }
 
         /// <summary>
-        ///     Creates a new IExomiaWebBrowser.
+        ///     Creates an new instance of <see cref="ExomiaWebBrowser" />.
         /// </summary>
         /// <param name="name"> The name. </param>
         /// <param name="baseUrl"> (Optional) URL of the base. </param>
         /// <param name="debug">   (Optional) True to debug. </param>
         /// <returns>
-        ///     An IExomiaWebBrowser.
+        ///     An <see cref="IExomiaWebBrowser" />.
         /// </returns>
         public static IExomiaWebBrowser Create(string name,
                                                string baseUrl = "about:blank",

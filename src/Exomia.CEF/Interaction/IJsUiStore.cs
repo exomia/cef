@@ -1,4 +1,14 @@
-﻿using System.Collections.Generic;
+﻿#region License
+
+// Copyright (c) 2018-2020, exomia
+// All rights reserved.
+// 
+// This source code is licensed under the BSD-style license found in the
+// LICENSE file in the root directory of this source tree.
+
+#endregion
+
+using System.Collections.Generic;
 
 namespace Exomia.CEF.Interaction
 {
@@ -11,7 +21,7 @@ namespace Exomia.CEF.Interaction
         ///     Initial state.
         /// </summary>
         /// <returns>
-        ///     An <see cref="IDictionary{TKey,TValue}"/>
+        ///     An <see cref="IDictionary{TKey,TValue}" />
         /// </returns>
         IDictionary<string, object> GetState();
     }
