@@ -18,11 +18,12 @@ namespace Exomia.CEF.Interaction
     public interface IJsUiStore
     {
         /// <summary>
-        ///     Initial state.
+        ///     [vue-ui] call this function to retrieve a state of the given module by name.
         /// </summary>
+        /// <param name="moduleName"> The module name to get the state from </param>
         /// <returns>
         ///     An <see cref="IDictionary{TKey,TValue}" />
         /// </returns>
-        IDictionary<string, object> GetState();
+        IDictionary<string, object> GetState(string moduleName);
     }
 }
