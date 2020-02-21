@@ -338,7 +338,27 @@ namespace Exomia.CEF
         /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
-            if (disposing) { Paint -= OnPaint; }
+            if (disposing)
+            {
+                Paint -= OnPaint;
+
+                static void DisposeDictionary<T>(IDictionary<T, object> dictionary)
+                {
+                    foreach (object v in dictionary.Values)
+                    {
+                        if (v is IDisposable disposable)
+                        {
+                            disposable.Dispose();
+                        }
+                    }
+                    dictionary.Clear();
+                }
+
+                lock (_services)
+                    DisposeDictionary(_services);
+                lock (_namedServices)
+                    DisposeDictionary(_namedServices);
+            }
             base.Dispose(disposing);
         }
 
