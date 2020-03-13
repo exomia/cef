@@ -11,7 +11,8 @@
 using System;
 using CefSharp.OffScreen;
 
-namespace Exomia.CEF {
+namespace Exomia.CEF
+{
     /// <summary>
     ///     A cef settings wrapper. This class cannot be inherited.
     /// </summary>

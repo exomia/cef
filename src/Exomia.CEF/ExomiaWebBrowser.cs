@@ -21,8 +21,6 @@ using Exomia.Framework.Input;
 using SharpDX;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
-using Message = System.Windows.Forms.Message;
-using MouseButtons = Exomia.Framework.Input.MouseButtons;
 
 namespace Exomia.CEF
 {
@@ -145,7 +143,7 @@ namespace Exomia.CEF
                 };
             }
 
-            _uiInputWrapper = new UiInputWrapper();
+            _uiInputWrapper = new UiInputWrapper(GetBrowser().GetHost());
             JavascriptObjectRepository.ResolveObject += (sender, e) =>
             {
                 if (e.ObjectName == null) { return; }
@@ -230,12 +228,6 @@ namespace Exomia.CEF
 
                 return uiActions;
             }
-        }
-
-        /// <inheritdoc />
-        void IExomiaWebBrowser.SetUiInputHandler(IInputHandler? inputHandler)
-        {
-            _uiInputWrapper.InputHandler = inputHandler;
         }
 
         /// <inheritdoc />
@@ -355,9 +347,13 @@ namespace Exomia.CEF
                 }
 
                 lock (_services)
+                {
                     DisposeDictionary(_services);
+                }
                 lock (_namedServices)
+                {
                     DisposeDictionary(_namedServices);
+                }
             }
             base.Dispose(disposing);
         }
@@ -393,116 +389,14 @@ namespace Exomia.CEF
 
         #region input handling
 
-        /// <inheritdoc />
-        void IInputHandler.KeyDown(int keyValue, KeyModifier modifiers)
+        void IInputHandler.RegisterInput(IInputDevice device)
         {
-            _uiInputWrapper.KeyDown(keyValue, modifiers);
+            _uiInputWrapper.RegisterInput(device);
         }
 
-        /// <inheritdoc />
-        void IInputHandler.KeyPress(char key)
+        void IInputHandler.UnregisterInput(IInputDevice device)
         {
-            _uiInputWrapper.KeyPress(key);
-        }
-
-        /// <inheritdoc />
-        void IInputHandler.KeyUp(int keyValue, KeyModifier modifiers)
-        {
-            _uiInputWrapper.KeyUp(keyValue, modifiers);
-        }
-
-        /// <inheritdoc />
-        void IRawInputHandler.KeyEvent(ref Message message)
-        {
-            _uiInputWrapper.KeyEvent(ref message);
-            GetBrowser()
-                .GetHost()
-                .SendKeyEvent(message.Msg, (int)message.WParam.ToInt64(), (int)message.LParam.ToInt64());
-        }
-
-        /// <inheritdoc />
-        void IRawInputHandler.MouseClick(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
-        {
-            _uiInputWrapper.MouseClick(x, y, buttons, clicks, wheelDelta);
-        }
-
-        /// <inheritdoc />
-        void IRawInputHandler.MouseDown(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
-        {
-            _uiInputWrapper.MouseDown(x, y, buttons, clicks, wheelDelta);
-            if ((buttons & MouseButtons.Left) == MouseButtons.Left)
-            {
-                GetBrowser()
-                    .GetHost()
-                    .SendMouseClickEvent(x, y, MouseButtonType.Left, false, clicks, CefEventFlags.LeftMouseButton);
-            }
-            if ((buttons & MouseButtons.Middle) == MouseButtons.Middle)
-            {
-                GetBrowser()
-                    .GetHost()
-                    .SendMouseClickEvent(x, y, MouseButtonType.Middle, false, clicks, CefEventFlags.MiddleMouseButton);
-            }
-            if ((buttons & MouseButtons.Right) == MouseButtons.Right)
-            {
-                GetBrowser()
-                    .GetHost()
-                    .SendMouseClickEvent(x, y, MouseButtonType.Right, false, clicks, CefEventFlags.RightMouseButton);
-            }
-        }
-
-        /// <inheritdoc />
-        void IRawInputHandler.MouseMove(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
-        {
-            _uiInputWrapper.MouseMove(x, y, buttons, clicks, wheelDelta);
-            CefEventFlags cefEventFlags = CefEventFlags.None;
-            if ((buttons & MouseButtons.Left) == MouseButtons.Left)
-            {
-                cefEventFlags |= CefEventFlags.LeftMouseButton;
-            }
-            if ((buttons & MouseButtons.Middle) == MouseButtons.Middle)
-            {
-                cefEventFlags |= CefEventFlags.MiddleMouseButton;
-            }
-            if ((buttons & MouseButtons.Right) == MouseButtons.Right)
-            {
-                cefEventFlags |= CefEventFlags.RightMouseButton;
-            }
-            GetBrowser()
-                .GetHost()
-                .SendMouseMoveEvent(x, y, false, cefEventFlags);
-        }
-
-        /// <inheritdoc />
-        void IRawInputHandler.MouseUp(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
-        {
-            _uiInputWrapper.MouseUp(x, y, buttons, clicks, wheelDelta);
-            if ((buttons & MouseButtons.Left) == MouseButtons.Left)
-            {
-                GetBrowser()
-                    .GetHost()
-                    .SendMouseClickEvent(x, y, MouseButtonType.Left, true, clicks, CefEventFlags.LeftMouseButton);
-            }
-            if ((buttons & MouseButtons.Middle) == MouseButtons.Middle)
-            {
-                GetBrowser()
-                    .GetHost()
-                    .SendMouseClickEvent(x, y, MouseButtonType.Middle, true, clicks, CefEventFlags.MiddleMouseButton);
-            }
-            if ((buttons & MouseButtons.Right) == MouseButtons.Right)
-            {
-                GetBrowser()
-                    .GetHost()
-                    .SendMouseClickEvent(x, y, MouseButtonType.Right, true, clicks, CefEventFlags.RightMouseButton);
-            }
-        }
-
-        /// <inheritdoc />
-        void IRawInputHandler.MouseWheel(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
-        {
-            _uiInputWrapper.MouseWheel(x, y, buttons, clicks, wheelDelta);
-            GetBrowser()
-                .GetHost()
-                .SendMouseWheelEvent(x, y, 0, wheelDelta, CefEventFlags.None);
+            _uiInputWrapper.UnregisterInput(device);
         }
 
         #endregion

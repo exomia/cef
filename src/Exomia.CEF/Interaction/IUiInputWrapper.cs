@@ -15,14 +15,5 @@ namespace Exomia.CEF.Interaction
     /// <summary>
     ///     Interface for user interface input wrapper.
     /// </summary>
-    interface IUiInputWrapper : IInputHandler
-    {
-        /// <summary>
-        ///     Gets or sets the input handler.
-        /// </summary>
-        /// <value>
-        ///     The input handler.
-        /// </value>
-        IInputHandler? InputHandler { get; set; }
-    }
+    interface IUiInputWrapper : IInputHandler { }
 }
