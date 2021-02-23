@@ -34,7 +34,7 @@ namespace Exomia.CEF
             AppDomain.CurrentDomain.AssemblyResolve += (s, args) =>
             {
                 string archSpecificPath = Path.Combine(
-                    AppDomain.CurrentDomain.SetupInformation.ApplicationBase,
+                    AppDomain.CurrentDomain.BaseDirectory,
                     Environment.Is64BitProcess ? "x64" : "x86", args.Name.Split(new[] { ',' }, 2)[0] + ".dll");
                 return File.Exists(archSpecificPath)
                     ? Assembly.LoadFile(archSpecificPath)
@@ -50,7 +50,6 @@ namespace Exomia.CEF
         {
             if (!Cef.IsInitialized)
             {
-                CefSharpSettings.LegacyJavascriptBindingEnabled      = false;
                 CefSharpSettings.ConcurrentTaskExecution             = true;
                 CefSharpSettings.ShutdownOnExit                      = true;
                 CefSharpSettings.SubprocessExitIfParentProcessClosed = true;

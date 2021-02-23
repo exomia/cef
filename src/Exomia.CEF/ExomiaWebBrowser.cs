@@ -122,6 +122,9 @@ namespace Exomia.CEF
                 throw new Exception(
                     $"{nameof(CefWrapper)} must be created before the {nameof(ExomiaWebBrowser)} is available!");
             }
+
+            JavascriptObjectRepository.Settings.LegacyBindingEnabled = false;
+            
             _name           = name;
             _graphicsDevice = null!;
 
@@ -132,18 +135,23 @@ namespace Exomia.CEF
 
             if (debug)
             {
+                // ReSharper disable once HeapView.ClosureAllocation
                 ConsoleMessage += (sender, args) =>
                 {
-                    Console.WriteLine("[{0}:{1}] [{2}] {3}", args.Level, args.Line, args.Source, args.Message);
+                    // ReSharper disable once HeapView.BoxingAllocation
+                    // ReSharper disable once HeapView.ObjectAllocation
+                    Console.WriteLine("[{0}:{1}] [{2}] {3}", args.Level.ToString(), args.Line.ToString(), args.Source, args.Message);
                 };
                 JavascriptObjectRepository.ObjectBoundInJavascript += (sender, e) =>
                 {
                     Console.WriteLine(
-                        $"Object '{e.ObjectName}' was bound successfully. (cached: {e.IsCached}; alreadyBound: {e.AlreadyBound})");
+                        $"Object '{e.ObjectName}' was bound successfully. (cached: {e.IsCached.ToString()}; alreadyBound: {e.AlreadyBound.ToString()})");
                 };
             }
 
             _uiInputWrapper = new UiInputWrapper(GetBrowser().GetHost());
+            // ReSharper disable once HeapView.ClosureAllocation
+            // ReSharper disable once HeapView.DelegateAllocation
             JavascriptObjectRepository.ResolveObject += (sender, e) =>
             {
                 if (e.ObjectName == null) { return; }
@@ -270,10 +278,12 @@ namespace Exomia.CEF
                         disposable.Dispose();
                     }
                     JavascriptObjectRepository.UnRegister(name);
+                    // ReSharper disable once HeapView.PossibleBoxingAllocation
                     _namedServices[name] = item;
                 }
                 else
                 {
+                    // ReSharper disable once HeapView.PossibleBoxingAllocation
                     _namedServices.Add(name, item);
                 }
                 return item;
@@ -284,6 +294,8 @@ namespace Exomia.CEF
         void IInitializable.Initialize(IServiceRegistry registry)
         {
             _graphicsDevice = registry.GetService<IGraphicsDevice>();
+            // ReSharper disable once HeapView.DelegateAllocation
+            // ReSharper disable once HeapView.ClosureAllocation
             _graphicsDevice.ResizeFinished += v =>
             {
                 GetBrowser().GetHost().NotifyMoveOrResizeStarted();
@@ -291,23 +303,26 @@ namespace Exomia.CEF
                 GetBrowser().GetHost().WasResized();
             };
             Size = new Size((int)_graphicsDevice.Viewport.Width, (int)_graphicsDevice.Viewport.Height);
-
+            
             while (!IsBrowserInitialized)
             {
+                // ReSharper disable once HeapView.ClosureAllocation
                 ManualResetEventSlim mre = new ManualResetEventSlim(IsBrowserInitialized);
 
                 void OnBrowserInitialized(object sender, EventArgs e)
                 {
                     mre.Set();
                 }
-
+                // ReSharper disable once HeapView.DelegateAllocation
                 BrowserInitialized += OnBrowserInitialized;
 
                 mre.Wait(2000);
 
+                // ReSharper disable once HeapView.DelegateAllocation
                 BrowserInitialized -= OnBrowserInitialized;
             }
 
+            // ReSharper disable once HeapView.DelegateAllocation
             Paint += OnPaint;
         }
 
@@ -332,10 +347,12 @@ namespace Exomia.CEF
         {
             if (disposing)
             {
+                // ReSharper disable once HeapView.DelegateAllocation
                 Paint -= OnPaint;
 
                 static void DisposeDictionary<T>(IDictionary<T, object> dictionary)
                 {
+                    // ReSharper disable once HeapView.ObjectAllocation.Possible
                     foreach (object v in dictionary.Values)
                     {
                         if (v is IDisposable disposable)
@@ -365,6 +382,7 @@ namespace Exomia.CEF
         /// <param name="e">      Event information to send to registered event handlers. </param>
         private void OnPaint(object sender, OnPaintEventArgs e)
         {
+            // ReSharper disable once HeapView.ObjectAllocation
             using Texture2D tex = new Texture2D(
                 _graphicsDevice.Device,
                 new Texture2DDescription
@@ -382,7 +400,9 @@ namespace Exomia.CEF
                 }, new DataRectangle(e.BufferHandle, e.Width * 4));
             Interlocked.Exchange(
                            ref _texture,
+                           // ReSharper disable once HeapView.ObjectAllocation.Evident
                            new Texture(
+                               // ReSharper disable once HeapView.ObjectAllocation.Evident
                                new ShaderResourceView1(_graphicsDevice.Device, tex), e.Width, e.Height))
                        ?.Dispose();
         }

@@ -5,6 +5,15 @@ VisualStudioVersion = 16.0.29709.97
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Exomia.CEF", "src\Exomia.CEF\Exomia.CEF.csproj", "{25D9B629-E538-498F-BE33-75D5883164B5}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{4DE02C23-CFFF-409D-BA15-B24656DC6712}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Exomia.CEF.Tests", "tests\L0\Exomia.CEF.Tests\Exomia.CEF.Tests.csproj", "{A176B9CC-B4CD-40A3-A733-CDA82076BC0F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5BE69773-34D1-456B-9DFE-63B7910C66C8}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,9 +24,16 @@ Global
 		{25D9B629-E538-498F-BE33-75D5883164B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{25D9B629-E538-498F-BE33-75D5883164B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{25D9B629-E538-498F-BE33-75D5883164B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A176B9CC-B4CD-40A3-A733-CDA82076BC0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A176B9CC-B4CD-40A3-A733-CDA82076BC0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A176B9CC-B4CD-40A3-A733-CDA82076BC0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A176B9CC-B4CD-40A3-A733-CDA82076BC0F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A176B9CC-B4CD-40A3-A733-CDA82076BC0F} = {4DE02C23-CFFF-409D-BA15-B24656DC6712}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {014C1820-0280-4D67-8236-9214FCB90B4D}

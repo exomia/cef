@@ -9,9 +9,9 @@
 #endregion
 
 using System.Threading;
-using System.Windows.Forms;
 using CefSharp;
 using Exomia.Framework.Input;
+using Exomia.Framework.Win32;
 using MouseButtons = Exomia.Framework.Input.MouseButtons;
 
 namespace Exomia.CEF.Interaction
@@ -157,89 +157,89 @@ namespace Exomia.CEF.Interaction
             Interlocked.Exchange(ref _state, state & ~flag);
         }
 
-        private bool KeyDown(int keyValue, KeyModifier modifiers)
+        private EventAction KeyDown(int keyValue, KeyModifier modifiers)
         {
-            return (_state & KEY_DOWN_FLAG) == KEY_DOWN_FLAG;
+            return (_state & KEY_DOWN_FLAG) == KEY_DOWN_FLAG ? EventAction.StopPropagation : EventAction.Continue;
         }
 
-        private bool KeyPress(char key)
+        private EventAction KeyPress(char key)
         {
-            return (_state & KEY_PRESS_FLAG) == KEY_PRESS_FLAG;
+            return (_state & KEY_PRESS_FLAG) == KEY_PRESS_FLAG ? EventAction.StopPropagation : EventAction.Continue;
         }
 
-        private bool KeyUp(int keyValue, KeyModifier modifiers)
+        private EventAction KeyUp(int keyValue, KeyModifier modifiers)
         {
-            return (_state & KEY_UP_FLAG) == KEY_UP_FLAG;
+            return (_state & KEY_UP_FLAG) == KEY_UP_FLAG ? EventAction.StopPropagation : EventAction.Continue;
         }
 
-        private bool RawKeyEvent(in Message message)
+        private EventAction RawKeyEvent(in Message message)
         {
-            _host.SendKeyEvent(message.Msg, (int)message.WParam.ToInt64(), (int)message.LParam.ToInt64());
-            return (_state & KEY_EVENT_FLAG) == KEY_EVENT_FLAG;
+            _host.SendKeyEvent((int)message.msg, (int)message.wParam.ToInt64(), (int)message.lParam.ToInt64());
+            return (_state & KEY_EVENT_FLAG) == KEY_EVENT_FLAG ? EventAction.StopPropagation : EventAction.Continue;
         }
 
-        private bool MouseDown(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
+        private EventAction MouseDown(in MouseEventArgs args)
         {
-            if ((buttons & MouseButtons.Left) == MouseButtons.Left)
+            if ((args.Buttons & MouseButtons.Left) == MouseButtons.Left)
             {
-                _host.SendMouseClickEvent(x, y, MouseButtonType.Left, false, clicks, CefEventFlags.LeftMouseButton);
+                _host.SendMouseClickEvent(args.X, args.Y, MouseButtonType.Left, false, args.Clicks, CefEventFlags.LeftMouseButton);
             }
-            if ((buttons & MouseButtons.Middle) == MouseButtons.Middle)
+            if ((args.Buttons & MouseButtons.Middle) == MouseButtons.Middle)
             {
-                _host.SendMouseClickEvent(x, y, MouseButtonType.Middle, false, clicks, CefEventFlags.MiddleMouseButton);
+                _host.SendMouseClickEvent(args.X, args.Y, MouseButtonType.Middle, false, args.Clicks, CefEventFlags.MiddleMouseButton);
             }
-            if ((buttons & MouseButtons.Right) == MouseButtons.Right)
+            if ((args.Buttons & MouseButtons.Right) == MouseButtons.Right)
             {
-                _host.SendMouseClickEvent(x, y, MouseButtonType.Right, false, clicks, CefEventFlags.RightMouseButton);
+                _host.SendMouseClickEvent(args.X, args.Y, MouseButtonType.Right, false, args.Clicks, CefEventFlags.RightMouseButton);
             }
-            return (_state & MOUSE_DOWN_FLAG) == MOUSE_DOWN_FLAG;
+            return (_state & MOUSE_DOWN_FLAG) == MOUSE_DOWN_FLAG ? EventAction.StopPropagation : EventAction.Continue;
         }
 
-        private bool MouseUp(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
+        private EventAction MouseUp(in MouseEventArgs args)
         {
-            if ((buttons & MouseButtons.Left) == MouseButtons.Left)
+            if ((args.Buttons & MouseButtons.Left) == MouseButtons.Left)
             {
-                _host.SendMouseClickEvent(x, y, MouseButtonType.Left, true, clicks, CefEventFlags.LeftMouseButton);
+                _host.SendMouseClickEvent(args.X, args.Y, MouseButtonType.Left, true, args.Clicks, CefEventFlags.LeftMouseButton);
             }
-            if ((buttons & MouseButtons.Middle) == MouseButtons.Middle)
+            if ((args.Buttons & MouseButtons.Middle) == MouseButtons.Middle)
             {
-                _host.SendMouseClickEvent(x, y, MouseButtonType.Middle, true, clicks, CefEventFlags.MiddleMouseButton);
+                _host.SendMouseClickEvent(args.X, args.Y, MouseButtonType.Middle, true, args.Clicks, CefEventFlags.MiddleMouseButton);
             }
-            if ((buttons & MouseButtons.Right) == MouseButtons.Right)
+            if ((args.Buttons & MouseButtons.Right) == MouseButtons.Right)
             {
-                _host.SendMouseClickEvent(x, y, MouseButtonType.Right, true, clicks, CefEventFlags.RightMouseButton);
+                _host.SendMouseClickEvent(args.X, args.Y, MouseButtonType.Right, true, args.Clicks, CefEventFlags.RightMouseButton);
             }
-            return (_state & MOUSE_UP_FLAG) == MOUSE_UP_FLAG;
+            return (_state & MOUSE_UP_FLAG) == MOUSE_UP_FLAG ? EventAction.StopPropagation : EventAction.Continue;
         }
 
-        private bool MouseClick(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
+        private EventAction MouseClick(in MouseEventArgs args)
         {
-            return (_state & MOUSE_CLICK_FLAG) == MOUSE_CLICK_FLAG;
+            return (_state & MOUSE_CLICK_FLAG) == MOUSE_CLICK_FLAG ? EventAction.StopPropagation : EventAction.Continue;
         }
 
-        private bool MouseMove(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
+        private EventAction MouseMove(in MouseEventArgs args)
         {
             CefEventFlags cefEventFlags = CefEventFlags.None;
-            if ((buttons & MouseButtons.Left) == MouseButtons.Left)
+            if ((args.Buttons & MouseButtons.Left) == MouseButtons.Left)
             {
                 cefEventFlags |= CefEventFlags.LeftMouseButton;
             }
-            if ((buttons & MouseButtons.Middle) == MouseButtons.Middle)
+            if ((args.Buttons & MouseButtons.Middle) == MouseButtons.Middle)
             {
                 cefEventFlags |= CefEventFlags.MiddleMouseButton;
             }
-            if ((buttons & MouseButtons.Right) == MouseButtons.Right)
+            if ((args.Buttons & MouseButtons.Right) == MouseButtons.Right)
             {
                 cefEventFlags |= CefEventFlags.RightMouseButton;
             }
-            _host.SendMouseMoveEvent(x, y, false, cefEventFlags);
-            return (_state & MOUSE_MOVE_FLAG) == MOUSE_MOVE_FLAG;
+            _host.SendMouseMoveEvent(args.X, args.Y, false, cefEventFlags);
+            return (_state & MOUSE_MOVE_FLAG) == MOUSE_MOVE_FLAG ? EventAction.StopPropagation : EventAction.Continue;
         }
 
-        private bool MouseWheel(int x, int y, MouseButtons buttons, int clicks, int wheelDelta)
+        private EventAction MouseWheel(in MouseEventArgs args)
         {
-            _host.SendMouseWheelEvent(x, y, 0, wheelDelta, CefEventFlags.None);
-            return (_state & MOUSE_WHEEL_FLAG) == MOUSE_WHEEL_FLAG;
+            _host.SendMouseWheelEvent(args.X, args.Y, 0, args.WheelDelta, CefEventFlags.None);
+            return (_state & MOUSE_WHEEL_FLAG) == MOUSE_WHEEL_FLAG ? EventAction.StopPropagation : EventAction.Continue;
         }
     }
 }
