@@ -1,6 +1,6 @@
 ﻿#region License
 
-// Copyright (c) 2018-2020, exomia
+// Copyright (c) 2018-2021, exomia
 // All rights reserved.
 // 
 // This source code is licensed under the BSD-style license found in the
@@ -30,64 +30,27 @@ namespace Exomia.CEF
     public sealed class ExomiaWebBrowser : ChromiumWebBrowser, IExomiaWebBrowser,
                                            IComponent, IInitializable, IInputHandler
     {
-        /// <summary>
-        ///     The exUi.
-        /// </summary>
-        private const string EX_UI = "exUi";
-
-        /// <summary>
-        ///     The exUiInput.
-        /// </summary>
+        private const string EX_UI       = "exUi";
         private const string EX_UI_INPUT = "exUiInput";
-
-        /// <summary>
-        ///     The exUiStore.
-        /// </summary>
         private const string EX_UI_STORE = "exUiStore";
 
-        /// <summary>
-        ///     The name.
-        /// </summary>
-        private readonly string _name;
-
-        /// <summary>
-        ///     The services.
-        /// </summary>
-        private readonly Dictionary<Type, object> _services;
-
-        /// <summary>
-        ///     The services.
-        /// </summary>
+        private readonly string                     _name;
+        private readonly Dictionary<Type, object>   _services;
         private readonly Dictionary<string, object> _namedServices;
+        private          IUiInputWrapper            _uiInputWrapper = null!;
+        private          Texture?                   _texture;
+        private          IGraphicsDevice            _graphicsDevice = null!;
 
-        /// <summary>
-        ///     The input wrapper.
-        /// </summary>
-        private readonly IUiInputWrapper _uiInputWrapper;
-
-        /// <summary>
-        ///     The texture.
-        /// </summary>
-        private Texture? _texture;
-
-        /// <summary>
-        ///     The graphics device.
-        /// </summary>
-        private IGraphicsDevice _graphicsDevice;
-
-        /// <inheritdoc />
         string IComponent.Name
         {
             get { return _name; }
         }
 
-        /// <inheritdoc />
         Texture? IExomiaWebBrowser.Texture
         {
             get { return _texture; }
         }
 
-        /// <inheritdoc />
         IInputHandler IExomiaWebBrowser.InputHandler
         {
             get { return this; }
@@ -107,11 +70,11 @@ namespace Exomia.CEF
                     WindowlessFrameRate       = 60,
                     Javascript                = CefState.Enabled,
                     JavascriptCloseWindows    = CefState.Disabled,
-                    JavascriptAccessClipboard = CefState.Disabled,
+                    JavascriptAccessClipboard = CefState.Enabled,
                     JavascriptDomPaste        = CefState.Enabled,
                     ImageLoading              = CefState.Enabled,
                     WebSecurity               = CefState.Disabled,
-                    LocalStorage              = CefState.Disabled,
+                    LocalStorage              = CefState.Enabled,
                     RemoteFonts               = CefState.Disabled,
                     WebGl                     = CefState.Disabled,
                     Plugins                   = CefState.Disabled
@@ -123,16 +86,190 @@ namespace Exomia.CEF
                     $"{nameof(CefWrapper)} must be created before the {nameof(ExomiaWebBrowser)} is available!");
             }
 
-            JavascriptObjectRepository.Settings.LegacyBindingEnabled = false;
-            
-            _name           = name;
-            _graphicsDevice = null!;
+            _name = name;
 
             _services      = new Dictionary<Type, object>();
             _namedServices = new Dictionary<string, object>();
 
             MenuHandler = new CustomContextMenuHandler();
 
+            SetupDebug(debug);
+        }
+
+        IUiActionHandler IExomiaWebBrowser.CreateJsUiActions()
+        {
+            lock (_services)
+            {
+                UiActions uiActions = new UiActions();
+                if (_services.TryGetValue(typeof(IUiActionHandler), out object service))
+                {
+                    if (service is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
+                    JavascriptObjectRepository.UnRegister(EX_UI);
+                    _services[typeof(IUiActionHandler)] = uiActions;
+                    _services[typeof(IJsUiActions)]     = uiActions;
+                }
+                else
+                {
+                    _services.Add(typeof(IUiActionHandler), uiActions);
+                    _services.Add(typeof(IJsUiActions), uiActions);
+                }
+
+                return uiActions;
+            }
+        }
+
+        void IExomiaWebBrowser.SetJsUiStore(IJsUiStore? jsUiStore)
+        {
+            lock (_services)
+            {
+                if (_services.TryGetValue(typeof(IJsUiStore), out object service))
+                {
+                    if (service is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
+                    JavascriptObjectRepository.UnRegister(EX_UI_STORE);
+                    if (jsUiStore != null)
+                    {
+                        _services[typeof(IJsUiStore)] = jsUiStore;
+                    }
+                }
+                else
+                {
+                    if (jsUiStore != null)
+                    {
+                        _services.Add(typeof(IJsUiStore), jsUiStore);
+                    }
+                }
+            }
+        }
+
+        T IExomiaWebBrowser.AddUiCallback<T>(string name, T item)
+        {
+            if (item == null) { throw new ArgumentNullException(nameof(item)); }
+            lock (_namedServices)
+            {
+                if (_namedServices.TryGetValue(name, out object service))
+                {
+                    if (service is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
+                    JavascriptObjectRepository.UnRegister(name);
+
+                    // ReSharper disable once HeapView.PossibleBoxingAllocation
+                    _namedServices[name] = item;
+                }
+                else
+                {
+                    // ReSharper disable once HeapView.PossibleBoxingAllocation
+                    _namedServices.Add(name, item);
+                }
+                return item;
+            }
+        }
+
+        /// <inheritdoc />
+        void IInitializable.Initialize(IServiceRegistry registry)
+        {
+            _graphicsDevice = registry.GetService<IGraphicsDevice>();
+
+            // ReSharper disable once HeapView.DelegateAllocation
+            // ReSharper disable once HeapView.ClosureAllocation
+            _graphicsDevice.ResizeFinished += v =>
+            {
+                GetBrowser().GetHost().NotifyMoveOrResizeStarted();
+                Size = new Size((int)v.Width, (int)v.Height);
+                GetBrowser().GetHost().WasResized();
+            };
+            Size = new Size((int)_graphicsDevice.Viewport.Width, (int)_graphicsDevice.Viewport.Height);
+
+            // ReSharper disable once HeapView.DelegateAllocation
+            Paint += OnPaint;
+        }
+
+        /// <summary>
+        ///     Creates an new instance of <see cref="ExomiaWebBrowser" />.
+        /// </summary>
+        /// <param name="name"> The name. </param>
+        /// <param name="baseUrl"> (Optional) URL of the base. </param>
+        /// <param name="debug">   (Optional) True to debug. </param>
+        /// <returns>
+        ///     An <see cref="IExomiaWebBrowser" />.
+        /// </returns>
+        public static IExomiaWebBrowser Create(string name,
+                                               string baseUrl = "about:blank",
+                                               bool   debug   = false)
+        {
+            ExomiaWebBrowser browser = new ExomiaWebBrowser(name, baseUrl, debug);
+            browser.Initialize();
+            return browser;
+        }
+
+        /// <inheritdoc />
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // ReSharper disable once HeapView.DelegateAllocation
+                Paint -= OnPaint;
+
+                static void DisposeDictionary<T>(IDictionary<T, object> dictionary)
+                {
+                    // ReSharper disable once HeapView.ObjectAllocation.Possible
+                    foreach (object v in dictionary.Values)
+                    {
+                        if (v is IDisposable disposable)
+                        {
+                            disposable.Dispose();
+                        }
+                    }
+                    dictionary.Clear();
+                }
+
+                lock (_services)
+                {
+                    DisposeDictionary(_services);
+                }
+                lock (_namedServices)
+                {
+                    DisposeDictionary(_namedServices);
+                }
+            }
+            base.Dispose(disposing);
+        }
+
+        internal void Initialize()
+        {
+            while (!IsBrowserInitialized)
+            {
+                // ReSharper disable once HeapView.ClosureAllocation
+                ManualResetEventSlim mre = new ManualResetEventSlim(IsBrowserInitialized);
+
+                void OnBrowserInitialized(object sender, EventArgs e)
+                {
+                    mre.Set();
+                }
+
+                // ReSharper disable once HeapView.DelegateAllocation
+                BrowserInitialized += OnBrowserInitialized;
+
+                mre.Wait(2000);
+
+                // ReSharper disable once HeapView.DelegateAllocation
+                BrowserInitialized -= OnBrowserInitialized;
+            }
+
+            _uiInputWrapper = new UiInputWrapper(GetBrowser().GetHost());
+
+            SetupJavascriptObjectRepository();
+        }
+
+        private void SetupDebug(bool debug)
+        {
             if (debug)
             {
                 // ReSharper disable once HeapView.ClosureAllocation
@@ -140,7 +277,8 @@ namespace Exomia.CEF
                 {
                     // ReSharper disable once HeapView.BoxingAllocation
                     // ReSharper disable once HeapView.ObjectAllocation
-                    Console.WriteLine("[{0}:{1}] [{2}] {3}", args.Level.ToString(), args.Line.ToString(), args.Source, args.Message);
+                    Console.WriteLine(
+                        "[{0}:{1}] [{2}] {3}", args.Level.ToString(), args.Line.ToString(), args.Source, args.Message);
                 };
                 JavascriptObjectRepository.ObjectBoundInJavascript += (sender, e) =>
                 {
@@ -148,8 +286,10 @@ namespace Exomia.CEF
                         $"Object '{e.ObjectName}' was bound successfully. (cached: {e.IsCached.ToString()}; alreadyBound: {e.AlreadyBound.ToString()})");
                 };
             }
+        }
 
-            _uiInputWrapper = new UiInputWrapper(GetBrowser().GetHost());
+        private void SetupJavascriptObjectRepository()
+        {
             // ReSharper disable once HeapView.ClosureAllocation
             // ReSharper disable once HeapView.DelegateAllocation
             JavascriptObjectRepository.ResolveObject += (sender, e) =>
@@ -212,174 +352,6 @@ namespace Exomia.CEF
             };
         }
 
-        /// <inheritdoc />
-        IUiActionHandler IExomiaWebBrowser.CreateJsUiActions()
-        {
-            lock (_services)
-            {
-                UiActions uiActions = new UiActions();
-                if (_services.TryGetValue(typeof(IUiActionHandler), out object service))
-                {
-                    if (service is IDisposable disposable)
-                    {
-                        disposable.Dispose();
-                    }
-                    JavascriptObjectRepository.UnRegister(EX_UI);
-                    _services[typeof(IUiActionHandler)] = uiActions;
-                    _services[typeof(IJsUiActions)]     = uiActions;
-                }
-                else
-                {
-                    _services.Add(typeof(IUiActionHandler), uiActions);
-                    _services.Add(typeof(IJsUiActions), uiActions);
-                }
-
-                return uiActions;
-            }
-        }
-
-        /// <inheritdoc />
-        void IExomiaWebBrowser.SetJsUiStore(IJsUiStore? jsUiStore)
-        {
-            lock (_services)
-            {
-                if (_services.TryGetValue(typeof(IJsUiStore), out object service))
-                {
-                    if (service is IDisposable disposable)
-                    {
-                        disposable.Dispose();
-                    }
-                    JavascriptObjectRepository.UnRegister(EX_UI_STORE);
-                    if (jsUiStore != null)
-                    {
-                        _services[typeof(IJsUiStore)] = jsUiStore;
-                    }
-                }
-                else
-                {
-                    if (jsUiStore != null)
-                    {
-                        _services.Add(typeof(IJsUiStore), jsUiStore);
-                    }
-                }
-            }
-        }
-
-        /// <inheritdoc />
-        T IExomiaWebBrowser.AddUiCallback<T>(string name, T item)
-        {
-            if (item == null) { throw new ArgumentNullException(nameof(item)); }
-            lock (_namedServices)
-            {
-                if (_namedServices.TryGetValue(name, out object service))
-                {
-                    if (service is IDisposable disposable)
-                    {
-                        disposable.Dispose();
-                    }
-                    JavascriptObjectRepository.UnRegister(name);
-                    // ReSharper disable once HeapView.PossibleBoxingAllocation
-                    _namedServices[name] = item;
-                }
-                else
-                {
-                    // ReSharper disable once HeapView.PossibleBoxingAllocation
-                    _namedServices.Add(name, item);
-                }
-                return item;
-            }
-        }
-
-        /// <inheritdoc />
-        void IInitializable.Initialize(IServiceRegistry registry)
-        {
-            _graphicsDevice = registry.GetService<IGraphicsDevice>();
-            // ReSharper disable once HeapView.DelegateAllocation
-            // ReSharper disable once HeapView.ClosureAllocation
-            _graphicsDevice.ResizeFinished += v =>
-            {
-                GetBrowser().GetHost().NotifyMoveOrResizeStarted();
-                Size = new Size((int)v.Width, (int)v.Height);
-                GetBrowser().GetHost().WasResized();
-            };
-            Size = new Size((int)_graphicsDevice.Viewport.Width, (int)_graphicsDevice.Viewport.Height);
-            
-            while (!IsBrowserInitialized)
-            {
-                // ReSharper disable once HeapView.ClosureAllocation
-                ManualResetEventSlim mre = new ManualResetEventSlim(IsBrowserInitialized);
-
-                void OnBrowserInitialized(object sender, EventArgs e)
-                {
-                    mre.Set();
-                }
-                // ReSharper disable once HeapView.DelegateAllocation
-                BrowserInitialized += OnBrowserInitialized;
-
-                mre.Wait(2000);
-
-                // ReSharper disable once HeapView.DelegateAllocation
-                BrowserInitialized -= OnBrowserInitialized;
-            }
-
-            // ReSharper disable once HeapView.DelegateAllocation
-            Paint += OnPaint;
-        }
-
-        /// <summary>
-        ///     Creates an new instance of <see cref="ExomiaWebBrowser" />.
-        /// </summary>
-        /// <param name="name"> The name. </param>
-        /// <param name="baseUrl"> (Optional) URL of the base. </param>
-        /// <param name="debug">   (Optional) True to debug. </param>
-        /// <returns>
-        ///     An <see cref="IExomiaWebBrowser" />.
-        /// </returns>
-        public static IExomiaWebBrowser Create(string name,
-                                               string baseUrl = "about:blank",
-                                               bool   debug   = false)
-        {
-            return new ExomiaWebBrowser(name, baseUrl, debug);
-        }
-
-        /// <inheritdoc />
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                // ReSharper disable once HeapView.DelegateAllocation
-                Paint -= OnPaint;
-
-                static void DisposeDictionary<T>(IDictionary<T, object> dictionary)
-                {
-                    // ReSharper disable once HeapView.ObjectAllocation.Possible
-                    foreach (object v in dictionary.Values)
-                    {
-                        if (v is IDisposable disposable)
-                        {
-                            disposable.Dispose();
-                        }
-                    }
-                    dictionary.Clear();
-                }
-
-                lock (_services)
-                {
-                    DisposeDictionary(_services);
-                }
-                lock (_namedServices)
-                {
-                    DisposeDictionary(_namedServices);
-                }
-            }
-            base.Dispose(disposing);
-        }
-
-        /// <summary>
-        ///     The ui paint event.
-        /// </summary>
-        /// <param name="sender"> Source of the event. </param>
-        /// <param name="e">      Event information to send to registered event handlers. </param>
         private void OnPaint(object sender, OnPaintEventArgs e)
         {
             // ReSharper disable once HeapView.ObjectAllocation
@@ -400,8 +372,10 @@ namespace Exomia.CEF
                 }, new DataRectangle(e.BufferHandle, e.Width * 4));
             Interlocked.Exchange(
                            ref _texture,
+
                            // ReSharper disable once HeapView.ObjectAllocation.Evident
                            new Texture(
+
                                // ReSharper disable once HeapView.ObjectAllocation.Evident
                                new ShaderResourceView1(_graphicsDevice.Device, tex), e.Width, e.Height))
                        ?.Dispose();

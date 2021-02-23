@@ -1,6 +1,6 @@
 ﻿#region License
 
-// Copyright (c) 2018-2020, exomia
+// Copyright (c) 2018-2021, exomia
 // All rights reserved.
 // 
 // This source code is licensed under the BSD-style license found in the
@@ -12,14 +12,13 @@ using System.Threading;
 using CefSharp;
 using Exomia.Framework.Input;
 using Exomia.Framework.Win32;
-using MouseButtons = Exomia.Framework.Input.MouseButtons;
 
 namespace Exomia.CEF.Interaction
 {
     /// <summary>
     ///     An input wrapper. This class cannot be inherited.
     /// </summary>
-    public sealed class UiInputWrapper : IUiInputWrapper
+    sealed class UiInputWrapper : IUiInputWrapper
     {
         private const int KEY_DOWN_FLAG  = 1;
         private const int KEY_UP_FLAG    = 1 << 1;
@@ -182,15 +181,18 @@ namespace Exomia.CEF.Interaction
         {
             if ((args.Buttons & MouseButtons.Left) == MouseButtons.Left)
             {
-                _host.SendMouseClickEvent(args.X, args.Y, MouseButtonType.Left, false, args.Clicks, CefEventFlags.LeftMouseButton);
+                _host.SendMouseClickEvent(
+                    args.X, args.Y, MouseButtonType.Left, false, args.Clicks, CefEventFlags.LeftMouseButton);
             }
             if ((args.Buttons & MouseButtons.Middle) == MouseButtons.Middle)
             {
-                _host.SendMouseClickEvent(args.X, args.Y, MouseButtonType.Middle, false, args.Clicks, CefEventFlags.MiddleMouseButton);
+                _host.SendMouseClickEvent(
+                    args.X, args.Y, MouseButtonType.Middle, false, args.Clicks, CefEventFlags.MiddleMouseButton);
             }
             if ((args.Buttons & MouseButtons.Right) == MouseButtons.Right)
             {
-                _host.SendMouseClickEvent(args.X, args.Y, MouseButtonType.Right, false, args.Clicks, CefEventFlags.RightMouseButton);
+                _host.SendMouseClickEvent(
+                    args.X, args.Y, MouseButtonType.Right, false, args.Clicks, CefEventFlags.RightMouseButton);
             }
             return (_state & MOUSE_DOWN_FLAG) == MOUSE_DOWN_FLAG ? EventAction.StopPropagation : EventAction.Continue;
         }
@@ -199,15 +201,18 @@ namespace Exomia.CEF.Interaction
         {
             if ((args.Buttons & MouseButtons.Left) == MouseButtons.Left)
             {
-                _host.SendMouseClickEvent(args.X, args.Y, MouseButtonType.Left, true, args.Clicks, CefEventFlags.LeftMouseButton);
+                _host.SendMouseClickEvent(
+                    args.X, args.Y, MouseButtonType.Left, true, args.Clicks, CefEventFlags.LeftMouseButton);
             }
             if ((args.Buttons & MouseButtons.Middle) == MouseButtons.Middle)
             {
-                _host.SendMouseClickEvent(args.X, args.Y, MouseButtonType.Middle, true, args.Clicks, CefEventFlags.MiddleMouseButton);
+                _host.SendMouseClickEvent(
+                    args.X, args.Y, MouseButtonType.Middle, true, args.Clicks, CefEventFlags.MiddleMouseButton);
             }
             if ((args.Buttons & MouseButtons.Right) == MouseButtons.Right)
             {
-                _host.SendMouseClickEvent(args.X, args.Y, MouseButtonType.Right, true, args.Clicks, CefEventFlags.RightMouseButton);
+                _host.SendMouseClickEvent(
+                    args.X, args.Y, MouseButtonType.Right, true, args.Clicks, CefEventFlags.RightMouseButton);
             }
             return (_state & MOUSE_UP_FLAG) == MOUSE_UP_FLAG ? EventAction.StopPropagation : EventAction.Continue;
         }

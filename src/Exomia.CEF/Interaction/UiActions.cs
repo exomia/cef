@@ -1,6 +1,6 @@
 ﻿#region License
 
-// Copyright (c) 2018-2020, exomia
+// Copyright (c) 2018-2021, exomia
 // All rights reserved.
 // 
 // This source code is licensed under the BSD-style license found in the
@@ -15,9 +15,8 @@ namespace Exomia.CEF.Interaction
     /// <summary>
     ///     An ui action class. This class cannot be inherited.
     /// </summary>
-    public sealed class UiActions : IJsUiActions, IUiActionHandler, IDisposable
+    sealed class UiActions : IJsUiActions, IUiActionHandler, IDisposable
     {
-        /// <inheritdoc />
         event TriggerHandler? IUiActionHandler.Trigger
         {
             add { _trigger += value; }
@@ -31,9 +30,6 @@ namespace Exomia.CEF.Interaction
             }
         }
 
-        /// <summary>
-        ///     The trigger.
-        /// </summary>
         private TriggerHandler? _trigger;
 
         /// <inheritdoc />

@@ -1,6 +1,6 @@
 ﻿#region License
 
-// Copyright (c) 2018-2020, exomia
+// Copyright (c) 2018-2021, exomia
 // All rights reserved.
 // 
 // This source code is licensed under the BSD-style license found in the
@@ -21,9 +21,6 @@ namespace Exomia.CEF
     /// </summary>
     public sealed class CefWrapper : IDisposable
     {
-        /// <summary>
-        ///     The cef settings.
-        /// </summary>
         private readonly CefSettingsWrapper? _wrapper;
 
         /// <summary>
@@ -38,7 +35,7 @@ namespace Exomia.CEF
                     Environment.Is64BitProcess ? "x64" : "x86", args.Name.Split(new[] { ',' }, 2)[0] + ".dll");
                 return File.Exists(archSpecificPath)
                     ? Assembly.LoadFile(archSpecificPath)
-                    : null;
+                    : Assembly.LoadFile(args.Name.Split(new[] { ',' }, 2)[0] + ".dll");
             };
         }
 
@@ -56,13 +53,17 @@ namespace Exomia.CEF
 
                 Cef.EnableHighDPISupport();
 
+                string? browserSubprocess = Path.Combine(
+                    AppDomain.CurrentDomain.SetupInformation.ApplicationBase,
+                    Environment.Is64BitProcess ? "x64" : "x86",
+                    "CefSharp.BrowserSubprocess.exe");
+
                 _wrapper = new CefSettingsWrapper(
                     new CefSettings
                     {
-                        BrowserSubprocessPath = Path.Combine(
-                            AppDomain.CurrentDomain.SetupInformation.ApplicationBase,
-                            Environment.Is64BitProcess ? "x64" : "x86",
-                            "CefSharp.BrowserSubprocess.exe"),
+                        BrowserSubprocessPath = File.Exists(browserSubprocess)
+                            ? browserSubprocess
+                            : "CefSharp.BrowserSubprocess.exe",
                         MultiThreadedMessageLoop   = true,
                         LogSeverity                = LogSeverity.Error,
                         WindowlessRenderingEnabled = true
